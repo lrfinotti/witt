@@ -1,4 +1,11 @@
+// Computation of the eta polynomials that help with
+// computations of Witt vectors
+
+// need some Witt functions
+load 'witt_gen.m';
+
 function etapols(p,n)
+    // compute eta polyn.
     PP<x,y>:=PolynomialRing(ResidueClassRing(p),2);
     res:=[* *];
     // res[i], at first has p^i*eta_i
@@ -24,42 +31,6 @@ function etapols(p,n)
 end function;
 
 
-/*
-// done with integers to test!
-function nu2(p,n)
-    P<X,Y>:=PolynomialRing(Integers(),2);
-    PP<x,y>:=PolynomialRing(GF(p),2);
-    res:=[* *];
-    for i in [1..n] do
-        res[i]:=X^(p^i)+Y^(p^i) - (X+Y)^(p^i);
-    end for;
-    res[1]:=res[1] div p;
-    for i in [2..n] do
-        t:=res[i-1];
-        // add the powers of the precomputed to all
-        for j in [i..n] do
-            t^:=p;
-            res[j]-:=p^(i-1)*t;
-        end for;
-        res[i]:=res[i] div p^i;
-       // res[i] is done!
-    end for;
-    return [* PP!x : x in res *];
-end function;
-*/
-
-/*
-
-// can test with
-for v in [ [3,7], [5,6], [7,5], [11,4] ] do
-    p:=v[1]; n:=v[2];
-    P<x,y>:=PolynomialRing(GF(p),2);
-    [ P!x : x in nu2(p,n) ] eq [ P!x : x in nu(p,n) ];
-end for;
-
-// Passed thr first 3...  Didn't finish the 4th.
-
-*/
 
 
 // remove zeros of a vector to simplify comp. of etas
@@ -76,7 +47,8 @@ function vRemoveZeros(v)
 end function;
 
 
-vetav := function(p,k,v : pols:=[ ])
+
+function vetav(p,k,v : pols:=[ ])
     // the input v is a vector!
     // the output is a vector of resulting
     //    polynomials eta_i(v) for i=1, ... , k
@@ -84,7 +56,6 @@ vetav := function(p,k,v : pols:=[ ])
     // firts, remove zeros!
     v:=vRemoveZeros(v);
 
- 
     lgt:=#v;
     // print "length = ", lgt;
     if lgt eq 1 then
@@ -139,9 +110,6 @@ vetav := function(p,k,v : pols:=[ ])
         return [ &+x : x in res ];
     end if;
 end function;
-
-
-load 'witt_gen.m';
 
 
 
@@ -419,7 +387,7 @@ Memory Usage (in MB):  140.812500000000000000000000000
 
 // in this one we have first a procedure which will store ALL
 // precomputed terms in the "associative array" pre
-vetav3p := procedure(p,k,v,~pre : bintab:=[] )
+procedure vetav3p(p,k,v,~pre : bintab:=[] )
     // the input v is a vector!
     // the output is a vector of resulting
     //    polynomials eta_i(v) for i=1, ... , k

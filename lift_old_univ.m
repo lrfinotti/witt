@@ -1,22 +1,19 @@
-// Used to compare with find_kernel2 to compare results
-
-
-// NEW VERSION!!!!
-// Uses the new functions
+// Computes canonical lift.
+// This one obtains universal ai's and bi's
 
 load 'sec_coord.m';
 
-// Computes canonical lift.
 
+    
 
 //  ------- fct ---------
 
-lift := function(a0,b0 : tm:=false, test:=false, ncoord:=2, minimal:=false, choice:=1)
+lift := function(a0,b0 : tm:=false, test:=false, ncoord:=2, minimal:=false)
 // tm = time it?
 // ncoord = no. of coordinates to compute (1 -> x1,P1; 2 -> x2,P2)
 // test = test result
 // minimal = compute minimal instead of canonical lift?
-// choice = make a_1=a_2=0 (choice:=2) or b_1=b_2=0 (choice:=1)
+
     
 if tm then
     ttime:=Cputime();
@@ -48,10 +45,9 @@ end if;
 Z:=RingOfIntegers();
 
 
-// made c1=0
-c1:=0;
 PR1<x0,c0,a1,b1>:=PolynomialRing(F1,4);
-    
+c1:=0;
+
 f:=PR1!(x0^3+a0*x0+b0);
 sf:=SpcFct(f);
 
@@ -123,7 +119,7 @@ vsol:=Solution(M1,v1);
 
 // Now, comput the solutions
 
-// x1 only involves c0 and c1, but not b1
+// x1 only involves c0, but not a1 and b1
 x1:=Evaluate(x1,<x0,vsol[1],vsol[2],vsol[3]>);
 
 
@@ -151,7 +147,8 @@ if tm then print "Done with 1st coord.";
     print "**************************************************";
 end if;
 
-
+// return a1, b1, x1, P1
+// if ncoord=1, stops here!
 if ncoord eq 1 then
     return vsol[2], vsol[3], x1, P1;
 end if;
@@ -170,15 +167,7 @@ end if;
 // introduce the new variables: a2 (and b2=0) or b2 (and a2=0)
 //  and the coeff. of x0^(pk) in x2
 // NOTE: need one less var. than if a2!=0 and b2!=0!!!
-if choice eq 1 then
-    PR2<x0,a2>:=PolynomialRing(F1,Z!((3*p+5)/2));
-    b1:=0;
-    b2:=0;
-else
-    PR2<x0,b2>:=PolynomialRing(F1,Z!((3*p+5)/2));
-    a1:=0;
-    a2:=0;
-end if;
+PR2<x0,a2,b2>:=PolynomialRing(F1,Z!((3*p+7)/2));
   
 // We need to convert the previous results to this new ring.
 Convert := procedure(~P,M) // convert P to new magma M
@@ -193,13 +182,9 @@ Convert(~y0pp1,PR2);
 Convert(~f,PR2);
 Convert(~sf,PR2);
 
-if choice eq 1 then
-    va1:=vsol[3]; // a1
-    vb1:=0; // b1
-else
-    vb1:=vsol[3]; // b1
-    va1:=0; // a1
-end if;
+
+va1:=vsol[2]; // a1
+vb1:=vsol[3]; // b1
 
 delete vsol;
 
@@ -221,7 +206,7 @@ end if;
 tmpx2:=PR2!((HI^(-1-p))*y0psm1-x0^(p^2-1)-x1^(p-1)*(HI^(-1)*y0pm1-x0^(p-1)));
 
 // we ARE adding the term in x0^(p^2)!!
-x2:=Integral(tmpx2,x0)+ &+[PR2.(i+3)*x0^(i*p) : i in [0..Z!((3*p-1)/2)] ];
+x2:=Integral(tmpx2,x0)+ &+[PR2.(i+4)*x0^(i*p) : i in [0..Z!((3*p-1)/2)] ];
 
 
 delete tmpx2, HI;
@@ -244,19 +229,7 @@ end if;
 
 
 // find the necessary vector for the call of SpcFctv
-if choice eq 1 then // b1=0
-    if a0 eq 0 then
-        ev:=[ 3*x0^(2*p)*x1 , va1*x0^p ];
-    else
-        ev:=[ 3*x0^(2*p)*x1 , a0^p*x1, va1*x0^p ];
-    end if;
-else // a1=0
-    if a0 eq 0 then
-        ev:=[ 3*x0^(2*p)*x1 , vb1 ];
-    else
-        ev:=[ 3*x0^(2*p)*x1 , a0^p*x1, vb1 ];
-    end if;
-end if;
+ev:=[ 3*x0^(2*p)*x1 , a0^p*x1, va1*x0^p, vb1 ];
 
 
 rhs2:= (3*x0^(2*p^2)+a0^(p^2))*x2 + 3*x0^(p^2)*x1^(2*p) +
@@ -295,7 +268,7 @@ P2:=0;
 deg1:=Degree(rhs2,x0);
 deg2:=(3*((p^2+1) div 2));
 
-print "RHS := ", rhs2 , ";";
+// print "RHS := ", rhs2 , ";";
 
 while deg1 ge deg2 do
     lterm:=Coefficient(rhs2,x0,deg1)*x0^(deg1-deg2);
@@ -323,80 +296,37 @@ if tm then
     print "computing M2 and v2";
 end if;
 
-r:=Z!((3*p+3)/2);  // number of variables (except x0) = rank!
-ncol:=1;
-
-// Use echelon form to find solution
-tzero:=<0 : i in [1..(3*p+5) div 2]>;
-
-j:=len;
+r:=Z!((3*p+5)/2);  // number of variables (except x0) = rank!
 
 
-M2:=Matrix(F1,ncol,r,[F1!(Coefficient(vcoef[j],i+1,1)) : i in [1..r]]);
-v2:=Matrix(F1,1,1,[F1!(-Evaluate(vcoef[j],tzero))]);
-j-:=1;
+tzero:=<0 : i in [1..(3*p+7) div 2]>;
+
+M2:=Matrix(F1,r,len,
+     [[F1!(Coefficient(vcoef[j],i+1,1)) : j in [1..len]] : i in [1..r]]);
+
+// We now solve the linear system.
+VS2:=VectorSpace(F1,len);
+
+// term independent of the variables
+// (note: the 4th variable is x0, which does not show up in the coef.)
+v2:=VS2![-Evaluate(vcoef[i],tzero) : i in [1..len]];
 
 
-// IIRC, I add the rows just as long as they increase the rank,
-// and until the rank is maximal, to try to not deal with a huge matrix...
-// Maybe MAGMA would be faster to just deal with the matrix itself????
-
-// Find a way to put already in echelon form so that the comp. of rank is quicker and
-// so is solving the system
-while (j ge 1) and (ncol lt r) do
-    // -------------------------
-    // print "Test: j=", j;
-    // -------------------------
-    tN:=Matrix(F1,1,r,[F1!(Coefficient(vcoef[j],i+1,1)) : i in [1..r]]);
-    tM2,T:=EchelonForm(VerticalJoin(M2,tN));
-    if Rank(tM2) eq ncol+1 then
-        M2:=tM2; ncol+:=1;
-        v2:=T*(VerticalJoin(v2,Matrix(F1,1,1,[F1!(-Evaluate(vcoef[j],tzero))])));
-        j-:=1;
-        delete T;
-    else j-:=1;
-    end if;
-    // -------------------------
-    // print "M2=", M2;
-    // -------------------------
-end while;
-
-if test then
-    print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
-    if M2 eq ScalarMatrix(r,F1!1)
-	then print "Echelon gives Identity";
-    else print "Echelon DOESN'T give Identity!"; print "M2 = ", M2;
-    end if;
-    print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
-end if;
-
-if tm then
-    print "%%%%%%%%%%%%%%";
-    print "M2 is ", Nrows(M2) , "x" , Ncols(M2);
-    print "Number of var is ", r;
-    print "%%%%%%%%%%%%%%";
-end if;
-
-/*
-if tm then
-    print "done comp. M2 and v2";
+if tm then 
+    print "Done comp. M2 and v2";
     print "Partial time = ", Cputime(ptime);
     print "Total time = ", Cputime(ttime);
     print "**************************************************";
     ptime:=Cputime();
     print "Solving the system";
 end if;
-*/
 
-// After it is in echelon form
-vsol:=[ v2[i][1] : i in [1..(Nrows(v2))] ];
 
-// IMPROVE?
-// Find all solutions??
-if #vsol ne r then
-    vsol:=vsol cat [ F1!0 : i in [(#vsol + 1)..r] ];
-end if;
+vsol:=Solution(M2,v2);
 
+
+// let's make cp=0
+//vsol:=vsol - vsol[p+3]/vker[p+3]*vker;
 
 if tm then
     print "done solving the system";
@@ -409,7 +339,7 @@ end if;
 delete M2, v2;
 
 // no. of varibales - 1 (for x0)
-r:=Z!((3*p+3)/2);
+r:=Z!((3*p+5)/2);
 
 // we now create a vector to evaluate the solutions
 // it must have <x0,a2 or b2, ..coefs of x2.. >
@@ -443,12 +373,7 @@ if tm then
 end if;
 
 
-if choice eq 1 then
-    return va1, vb1, x1, P1, vsol[1], 0, x2, P2;
-else
-    return va1, vb1, x1, P1, 0, vsol[1], x2, P2;
-end if;
-
+return va1, vb1, x1, P1, vsol[1], vsol[2], x2, P2;
 
 end function;
 

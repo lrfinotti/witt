@@ -1,9 +1,8 @@
-// NEW VERSION!!!!
-// Uses the new functions
+// Computes canonical lift.
+// This version allows choice ai=0 or bi=0
 
 load 'sec_coord.m';
 
-// Computes canonical lift.
 
 
 // computes quotient and remainder of a div. of polynomials at the same time

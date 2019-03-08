@@ -1,11 +1,20 @@
 // computes canonical lifting and elliptic Teichmuller lift
 // using new methods (etas, formular for GT, etc.)
-// WORKS FOR n>2!!!!
+//
+// This was created to allow to compute more than 2 coordinates.
+// Unfortunately, it is *MUCH* slower than fctWitt5.m for 2 coordinates!!!
+// I need to check the times of parts to pinpoint the slowdown.
+//
+// This is very similar to minlift.m, which seems to be efficient...
+//
+// THIS VERSION TRIES TO COMPUTE IT WITHOUT DOING THE LONG DIVSION!
+// IT IS INEFFICIENT!!!!!!
+
 
 load "gt.m"; // which loads etas.m
 
 function my_int(f)
-
+    // formal integral of polynomials
     deg:=Degree(f);
     P:=Parent(f);
     p:=Characteristic(P);
@@ -20,10 +29,10 @@ function my_int(f)
 end function;
 
 
-function lift(a0,b0,n : pols:=[])
+function lift(a0,b0,n : pols:=[], minimal:=false)
     // lenght (n+1) -- up to a_n, b_n
-    
-
+    // returns vectors va, vb, vF, vH
+    // pols are etapols from etas.m
 
     F:=Parent(a0);
     p:=Characteristic(F);
@@ -31,9 +40,6 @@ function lift(a0,b0,n : pols:=[])
     if #pols eq 0 then
         pols:=etapols(p,n);
     end if;
-
-
-    
 
     // ring for the resulting polynomials in x0
     Pres<x0>:=PolynomialRing(F);
@@ -52,20 +58,29 @@ function lift(a0,b0,n : pols:=[])
     // Hasse Invariant
     HI:=F!(Coefficient(ff,p-1));
 
-    
+
+    // x/y to compute can. lift.
+    // load "witt_gen.m"; loaded by gt.m
+    if n ge 3 then
+        tmpF:=RationalFunctionField(GF(p),2*n+2);
+        vx:=[tmpF.j : j in [1..(n+1)]];
+        vy:=[tmpF.j : j in [(n+2)..(2*n+2)]];
+        vyi:=WittInv(vy);
+        delete vy;
+        vxoy:=newWittProd(vx,vyi : pols:=pols);
+        delete vx;
+    end if;
+
     // main loop
     for i in [1..n] do
-
-        
         
         //polynomial ring for this coordinate
         M:=(3*p^(i-1)-1) div 2; // c_i's
-        // N:=((i+3)*p^i - i*p^(i-1) - 3) div 2; // d_i's
-        Pi:=PolynomialRing(F,2 + 2 + (M+1) + 1);
-        // x_0, y_0, a_n, b_n, c_i's, Hn
+        N:=((i+3)*p^i - i*p^(i-1) - 3) div 2; // d_i's
+        Pi:=PolynomialRing(F,2 + 2 + (M+1) + (N+1));
+        // x_0, y_0, a_n, b_n, c_i's, d_i's
 
-        // a temporary power of f to help compute F_i's:
-        // f^((p^i-1)/2)
+        // a temporary power of f to help compute F_i's
         if i eq 1 then
            tmppf:=ff;
         else
@@ -83,28 +98,45 @@ function lift(a0,b0,n : pols:=[])
         // will make c_(p^(n-1))=0
         Fi+:=&+[ Pi.(5+j)*(Pi.1)^(p*j) : j in [0..M] | j ne p^(i-1) ];
 
-        // add condition if not minimal!!!!!!!
+        ///////////////////////////////////////////////////////////////
+        // ADD CONDITION IF NOT MINIMAL!!!!!!!
 
+        if (not minimal) and (i eq 2) then
+            tmp:= F!(3/4)*resF[2]^2;
+            Fi+:= &+[(Coefficient(tmp,Integers()!(i/p+p)))^p*Pi.1^i :
+                     i in [Integers()!((3*p^2+p)/2) .. 2*p^2-p by p]];
+        end if;
+
+        // Condition for i ge 3
+        // if (not minimal) and (i ge 3) then
+        //
+        // end if;
+
+        ///////////////////////////////////////////////////////////////
+
+
+        Hi:=&+[ Pi.(6+M+j)*(Pi.1)^j : j in [0..N]];
+
+        //print Fi, Hi;
         
         va:=[ Pi!x : x in resa ] cat [Pi.3];
         vb:=[ Pi!x : x in resb ] cat [Pi.4];
         vF:=[ Evaluate(x,Pi.1) : x in resF ] cat [Fi];
-        vG:=[ Pi.2*Evaluate(x,Pi.1) : x in resH ] cat [Pi.2*Pi.(M+6)];
+        vG:=[ Pi.2*Evaluate(x,Pi.1) : x in resH ] cat [Pi.2*Hi];
         vone:=[Pi!1] cat [ Pi!0 : j in [1..i]];
 
         vvars:=vF cat vG;
 
-
         GTx:=GT( [[* vone,3,0 *], [* va,1,0 *], [* vb,0,0 *]] : pols:=pols, vvars:=vvars);
 
         GTy:=GT( [[* vone,0,2 *]] : pols:=pols, vvars:=vvars);
-
+        
         RHS:=GTx[i+1];
         delete GTx;
         LHS:=GTy[i+1];
         delete GTy;
-        LHS:=Coefficient(LHS,M+6,0); // terms without Hn
         
+
         // now, replace y0^2 by f
         deg:=Degree(LHS,2);   
         tmppf2:=1;
@@ -114,50 +146,33 @@ function lift(a0,b0,n : pols:=[])
            tmpLHS+:=Coefficient(LHS,2,d)*tmppf2;
         end for;
 
-        RHS-:=tmpLHS;
+        eqts:=Coefficients(tmpLHS-RHS,1);
         
-        delete tmpLHS, LHS, tmppf2;
+        delete tmpLHS, LHS, RHS, tmppf2;
 
-        tmppf2:=Evaluate(tmppf*f,Pi.1); //f^((p^i+1)/2)
-        // long division
-        
-        RHS*:=Pi!(1/2);
-        deg1:=Degree(RHS,Pi.1);
-        deg2:=(3*(p^i+1) div 2);
-        quo:=0;
-
-        while deg1 ge deg2 do
-            lterm:=Coefficient(RHS,1,deg1)*((Pi.1)^(deg1-deg2));
-            RHS-:=lterm*tmppf2;
-            quo+:=lterm;
-            deg1:=Degree(RHS,1);
-        end while;
-        // RHS is now the remainder
-
-        delete tmppf2;
-
-        vrem:=Coefficients(RHS,1);
-       
         // matrix of coefficients
-        neqts:=#vrem;
-        Mat:=Matrix(F,2+M,neqts,
-             [[F!(Coefficient(vrem[j],k+2,1)) : j in [1..neqts]]
-                 : k in [ ii : ii in [1..(2+(M+1))] | ii ne 3+p^(i-1) ]]);
+        neqts:=#eqts;
+        Mat:=Matrix(F,2+M+(N+1),neqts,
+             [[F!(Coefficient(eqts[j],k+2,1)) : j in [1..neqts]]
+                 : k in [ ii : ii in [1..(2+(M+1)+(N+1))] | ii ne 3+p^(i-1) ]]);
 
-        vec:=Vector(F,[ -Evaluate(vrem[j],[ 0 : k in [1..(2+2+(M+1)+1)]]) : j in [1..neqts]]);
+        vec:=Vector(F,[ -Evaluate(eqts[j],[ 0 : k in [1..(2+2+(M+1)+(N+1))]]) : j in [1..neqts]]);
 
+        print "Size = ", NumberOfRows(Mat), NumberOfColumns(Mat);
+        ptime:=Cputime();
         vsol:=Solution(Mat,vec);
+        print "Partial time = ", Cputime(ptime);
 
         // to convert solutoions to Pres/F
         evalvec:=[x0,0] cat [ vsol[j] : j in [1..2+p^(i-1)] ] cat [0] cat
-                 [vsol[j] : j in [2+p^(i-1)+1..(2+M)]] cat [0]; 
+                 [vsol[j] : j in [2+p^(i-1)+1..2+M+(N+1)]]; 
 
         //print evalvec;
         
         Append(~resa,vsol[1]);
         Append(~resb,vsol[2]);
         Append(~resF,Evaluate(Fi,evalvec));
-        Append(~resH,Evaluate(quo,evalvec));
+        Append(~resH,Evaluate(Hi,evalvec));
 
     
     end for;
