@@ -1,9 +1,12 @@
-// computes minimal degree liftings only
+// computes canonical and minimal degree liftings
 // using new methods (etas, formulas for GT, etc.)
 // It works for n>2 when computing MINIMAL DEGREE LIFTS!!!!
 // But it still needs work for canonical liftings (for n>2)...
 
-load "gt.m"; // which loads etas.m
+
+// we need the functions for the Greenberg transform
+load "gt.m"; // which loads etas.m, and witt_gen.m
+
 
 function my_int(f)
     // formal integral of polynomials
@@ -25,6 +28,8 @@ function lift(a0,b0,n : pols:=[], minimal:=false)
     // lenght (n+1) -- up to a_n, b_n
     // returns vectors va, vb, vF, vH
     // pols are etapols from etas.m
+    // computes canonical liftins by default
+    // set minimal:=true to compute minimal degree liftings
 
     F:=Parent(a0);
     p:=Characteristic(F);
