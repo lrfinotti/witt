@@ -5,76 +5,138 @@
 // BASIC FUNCTIONS
 // ////////////////////////////////////////
 
-// compute prim. roots of 1 to help
-// change integers to Witt vectors
-function GenPrimRoots(p,n)
-    if p eq 2
-      then return [0,1];
+
+// For Witt Vectors over finite fields, operations are
+// *MUCH* more efficient if converting to p-adic extensions
+
+// convert a Witt vector over a finite field to p-adic power series
+function WittVToSeries(v : Zq:=0)
+
+    FF:=Parent(v[1]);
+    p:=Characteristic(FF);
+    n:=#v-1;
+
+    // if ring is not given, create it
+    // if Zq cmpeq pAdicRing(2) then
+    if Zq cmpeq 0 then
+        k:=Degree(FF);
+        Zp:=pAdicRing(p : Precision:=n+1);
+        Zq<aa>:= ext<Zp | k>;
     end if;
 
-    res:=[0,1];
-
-    ZZ:=Integers();
-    PR<x>:=PolynomialRing(ZZ);
-    
-
-    R:=ResidueClassRing(p^n);
-    
-    f:=x^(p-1)-1;
-    fp:=(p-1)*x^(p-2);
-
-    for i in [2..(p-2)] do
-	root:=R!i;
-	while (Evaluate(f,root) ne R!0) do 
-	    root-:=Evaluate(f,root)/(Evaluate(fp,root));
-	end while;
-	Append(~res,ZZ!root);
-    end for;
-
-    // Append(~res,-1);
-    Append(~res,p^n-1);
-
-    return(res);
+    return &+[ Zq!TeichmuellerLift(Root(v[i],p^(i-1)),quo<Zq | p^(n+2-i)>)*p^(i-1) : i in [1..(n+1)] ];
 
 end function;
+
+
+// convert p-adic power series to a Witt vector
+function SeriesToWittV(s : F:=0)
+
+    Zq:=Parent(s);
+    n:=Zq`DefaultPrecision-1;
+    k:=Degree(Zq);
+    p:=Prime(Zq);
+
+    // if finite field not given, create it
+    if F cmpeq 0 then
+        F<a>:=GF(p^k);
+    end if;
+
+    v:=[];
+
+    a:=s;
+    for i in [0..n] do
+        t:=F!a;
+        Append(~v,t);
+        tt:= Zq!TeichmuellerLift(t,quo<Zq | p^(n+1-i)>);
+        a:=(a - tt) div p;
+    end for;
+    return [ v[i+1]^(p^i) : i in [0..n] ];
+
+end function;
+
+
+
+function IntToWitt(n,p,l)
+    Zp := pAdicRing(p : Precision:=l);
+    F:=GF(p);
+    return SeriesToWittV(Zp!n : F:=F);
+end function;
+
+
+
+
+// OBSOLETE: the function above performs better!
+/* // compute prim. roots of 1 to help */
+/* // change integers to Witt vectors */
+/* function GenPrimRoots(p,n) */
+/*     if p eq 2 */
+/*       then return [0,1]; */
+/*     end if; */
+
+/*     res:=[0,1]; */
+
+/*     ZZ:=Integers(); */
+/*     PR<x>:=PolynomialRing(ZZ); */
+    
+
+/*     R:=ResidueClassRing(p^n); */
+    
+/*     f:=x^(p-1)-1; */
+/*     fp:=(p-1)*x^(p-2); */
+
+/*     for i in [2..(p-2)] do */
+/* 	root:=R!i; */
+/* 	while (Evaluate(f,root) ne R!0) do  */
+/* 	    root-:=Evaluate(f,root)/(Evaluate(fp,root)); */
+/* 	end while; */
+/* 	Append(~res,ZZ!root); */
+/*     end for; */
+
+/*     // Append(~res,-1); */
+/*     Append(~res,p^n-1); */
+
+/*     return(res); */
+
+/* end function; */
 	    
 
 
-// Convert Integer to Witt Vector
-function IntToWitt(n,p,l : primr:=[])
+/* // Convert Integer to Witt Vector */
+/* function IntToWitt(n,p,l : primr:=[]) */
 
-// n = number to be converted
-// p = prime
-// l = length
-// primr = primitive roots 
+/* // n = number to be converted */
+/* // p = prime */
+/* // l = length */
+/* // primr = primitive roots  */
 
-    Zp:=GF(p);
-    ZZ:=Integers();
+/*     Zp:=GF(p); */
+/*     ZZ:=Integers(); */
 
-    if primr eq []
-	then primr:=GenPrimRoots(p,l);
-    end if;
+/*     if primr eq [] */
+/* 	then primr:=GenPrimRoots(p,l); */
+/*     end if; */
 
-    // print primr;
+/*     // print primr; */
     
-    res:=[];
-    numb:=n mod p^l;
+/*     res:=[]; */
+/*     numb:=n mod p^l; */
     
-    for i in [1..l] do
-	entry:=numb mod p;
-	Append(~res,Zp!entry);
-	// print "i = ", i;
-	// print "numb = ", numb;
-	// print "entry = ", entry;
-	// print "primr[entry+1] = ", primr[entry+1];
-	// print "(numb-primr[entry+1]) div p = ", (numb-primr[entry+1]) div p;
-	// print "";
-	numb:=((numb-primr[entry+1]) div p);
-    end for;
+/*     for i in [1..l] do */
+/* 	entry:=numb mod p; */
+/* 	Append(~res,Zp!entry); */
+/* 	// print "i = ", i; */
+/* 	// print "numb = ", numb; */
+/* 	// print "entry = ", entry; */
+/* 	// print "primr[entry+1] = ", primr[entry+1]; */
+/* 	// print "(numb-primr[entry+1]) div p = ", (numb-primr[entry+1]) div p; */
+/* 	// print ""; */
+/* 	numb:=((numb-primr[entry+1]) div p); */
+/*     end for; */
 
-    return res;
+/*     return res; */
 
-end function;
+/* end function; */
 
 
 // ///////////////////////////////////////////////
@@ -196,12 +258,12 @@ end function;
 // saves memory, but can be slower
 
 
-function BinTab(p,k : primr:=[])
+function BinTab(p,k)
     // gives back the bin. coeff need for vetav2
 
-    if #primr eq 0 then
-        primr:=GenPrimRoots(p,k+1); // to convert to bin. to Witt vec
-    end if;
+    /* if #primr eq 0 then */
+    /*     primr:=GenPrimRoots(p,k+1); // to convert to bin. to Witt vec */
+    /* end if; */
 
     R:=ResidueClassRing(p^(k+1));
     ZZ:=Integers();
@@ -219,7 +281,7 @@ function BinTab(p,k : primr:=[])
             Append(~tmp,tmp[j-1]*a*b^(-1)); // add next binomial
             delete a, b;
         end for;
-        Append(~res,[ IntToWitt(-ZZ!(tmp[j]),p,Valuation(j,p)+1 : primr:=primr)[Valuation(j,p)+1] : j in [1..#tmp] ]); // conv to Witt vec and take right coord
+        Append(~res,[ IntToWitt(-ZZ!(tmp[j]),p,Valuation(j,p)+1)[Valuation(j,p)+1] : j in [1..#tmp] ]); // conv to Witt vec and take right coord
 
         delete tmp;
 
@@ -495,426 +557,3 @@ end function;
 
 
 
-// /////////////////////////////////////////////////
-// WITT VECTORS
-// Witt Vector Operations using the methods above
-// /////////////////////////////////////////////////
-
-
-
-// For Witt Vectors over finite fields, operations are
-// *MUCH* more efficient if converting to p-adic extensions
-
-// convert a Witt vector over a finite field to p-adic power series
-function WittVToSeries(v : Zq:=0)
-
-    FF:=Parent(v[1]);
-    p:=Characteristic(FF);
-    n:=#v-1;
-
-    // if ring is not given, create it
-    if Zq cmpeq pAdicRing(2) then
-        k:=Degree(FF);
-        Zp:=pAdicRing(p : Precision:=n+1);
-        Zq<aa>:= ext<Zp | k>;
-    end if;
-
-    return &+[ Zq!TeichmuellerLift(Root(v[i],p^(i-1)),quo<Zq | p^(n+2-i)>)*p^(i-1) : i in [1..(n+1)] ];
-
-end function;
-
-
-// convert p-adic power series to a Witt vector
-function SeriesToWittV(s : F:=0)
-
-    Zq:=Parent(s);
-    n:=Zq`DefaultPrecision-1;
-    k:=Degree(Zq);
-    p:=Prime(Zq);
-
-    // if finite field not given, create it
-    if F cmpeq 0 then
-        F<a>:=GF(p^k);
-    end if;
-
-    v:=[];
-
-    a:=s;
-    for i in [0..n] do
-        t:=F!a;
-        Append(~v,t);
-        tt:= Zq!TeichmuellerLift(t,quo<Zq | p^(n+1-i)>);
-        a:=(a - tt) div p;
-    end for;
-    return [ v[i+1]^(p^i) : i in [0..n] ];
-
-end function;
-
-
-
-
-
-
-
-// using vetav
-function newWittSum(v1,v2 : pols:=[])
-    P:=Parent(v1[1]);
-    p:=Characteristic(P);
-    n:=#v1-1;
-    // initialize
-    res:=[ vRemoveZeros([v1[i], v2[i]]) : i in [1..(n+1)] ];
-    // print res;
-    // precompute the nec. pol.
-    if #pols eq 0 then
-        // print "Computing etapols";
-        pols:=etapols(p,n);
-    end if;
-
-    if #pols gt n then
-        pols:=pols[1..n];
-    end if;
-
-    for i in [2..(n+1)] do
-        // print "iteration ", i, " of ", n+1;
-        l:=#res[i-1];
-        for j in [2..l] do
-            // print "    iteration", j, " of ", l;
-            // add the terms coming from res[i-1]
-            temp:=vetav(p,n+2-i,[res[i-1][j],&+(res[i-1][1..(j-1)])] : pols:=pols); // note that here it just eval. the pols.
-            for t in [i..(n+1)] do
-                if temp[t-i+1] ne 0 then 
-                    Append(~res[t],temp[t-i+1]);
-                end if;
-            end for;
-        end for;
-        // res[i] is done!
-        Remove(~pols,n+2-i); // won't need the last anymore..
-        // print res;
-    end for;
-    return [ &+x : x in res ];
-end function;
-
-
-// using vetav2
-function newWittSum2(v1,v2 : bintab:=[])
-    P:=Parent(v1[1]);
-    p:=Characteristic(P);
-    n:=#v1-1;
-    // initialize
-    res:=[ vRemoveZeros([v1[i], v2[i]]) : i in [1..(n+1)] ];
-    // print res;
-    // precompute the nec. pol.
-    if #bintab eq 0 then
-        // print "Computing bintab";
-        bintab:=BinTab(p,n);
-    end if;
-
-    for i in [2..(n+1)] do
-        // print "iteration ", i, " of ", n+1;
-        l:=#res[i-1];
-        for j in [2..l] do
-            // print "    iteration", j, " of ", l;
-            // add the terms coming from res[i-1]
-            temp:=vetav2(p,n+2-i,[res[i-1][j],&+(res[i-1][1..(j-1)])] : bintab:=bintab); // note that here it just eval. the pols.
-            for t in [i..(n+1)] do
-                if temp[t-i+1] ne 0 then 
-                    Append(~res[t],temp[t-i+1]);
-                end if;
-            end for;
-        end for;
-        // res[i] is done!
-        // print res;
-    end for;
-    return [ &+x : x in res ];
-end function;
-
-
-
-// using vetav3
-function newWittSum3(v1,v2 : bintab:=[])
-    P:=Parent(v1[1]);
-    p:=Characteristic(P);
-    n:=#v1-1;
-    // initialize
-    res:=[ vRemoveZeros([v1[i], v2[i]]) : i in [1..(n+1)] ];
-    // print res;
-    // precompute the nec. pol.
-    if #bintab eq 0 then
-        // print "Computing bintab";
-        bintab:=BinTab(p,n);
-    end if;
-
-    for i in [2..(n+1)] do
-        // print "iteration ", i, " of ", n+1;
-        l:=#res[i-1];
-        for j in [2..l] do
-            // print "    iteration", j, " of ", l;
-            // add the terms coming from res[i-1]
-            temp:=vetav3(p,n+2-i,[res[i-1][j],&+(res[i-1][1..(j-1)])] : bintab:=bintab); // note that here it just eval. the pols.
-            for t in [i..(n+1)] do
-                if temp[t-i+1] ne 0 then 
-                    Append(~res[t],temp[t-i+1]);
-                end if;
-            end for;
-        end for;
-        // res[i] is done!
-        // print res;
-    end for;
-    return [ &+x : x in res ];
-end function;
-
-
-
-
-
-
-
-
-// using vetav
-function newWittProd(v1,v2 : pols:=[])
-    P:=Parent(v1[1]);
-    p:=Characteristic(P);
-    n:=#v1-1;
-    // initialize
-    res:=[ vRemoveZeros([ v1[j+1]^(p^(i-j))*v2[i-j+1]^(p^j) : j in [0..i] ]) : i in [0..n] ];
-
-    // print "initial res = ", res;
-
-    if n eq 1 then
-        // done
-        return [ &+x : x in res];
-    end if;
-    // print res;
-    // precompute the nec. pol.
-    if #pols eq 0 then
-        // print "Computing etapols";
-        pols:=etapols(p,n-1); // NOTE: n-1 only!
-    end if;
-
-    if #pols gt (n-1) then
-        pols:=pols[1..(n-1)];
-    end if;
-
-    for i in [3..(n+1)] do
-        // print "iteration ", i, " of ", n+1;
-        l:=#res[i-1];
-        for j in [2..l] do
-            // print "    iteration", j, " of ", l;
-            // add the terms coming from res[i-1]
-            temp:=vetav(p,n+2-i,[res[i-1][j],&+(res[i-1][1..(j-1)])] : pols:=pols); // note that here it just eval. the pols.
-            // print "temp = ", temp;
-            for t in [i..(n+1)] do
-                if temp[t-i+1] ne 0 then
-                    Append(~res[t],temp[t-i+1]);
-                end if;
-            end for;
-        end for;
-        // res[i] is done!
-        Remove(~pols,n+2-i); // won't need the last anymore..
-        // print res;
-    end for;
-    return [ &+x : x in res ];
-end function;
-
-
-
-// using vetav2
-function newWittProd2(v1,v2 : bintab:=[])
-    P:=Parent(v1[1]);
-    p:=Characteristic(P);
-    n:=#v1-1;
-    // initialize
-    res:=[ vRemoveZeros([ v1[j+1]^(p^(i-j))*v2[i-j+1]^(p^j) : j in [0..i] ]) : i in [0..n] ];
-
-    // print "initial res = ", res;
-
-    if n eq 1 then
-        // done
-        return [ &+x : x in res];
-    end if;
-    // print res;
-    // precompute the nec. binomials
-    if #bintab eq 0 then
-        // print "Computing bintab";
-        bintab:=BinTab(p,n-1);  // note only need n-1
-    end if;
-
-    for i in [3..(n+1)] do
-        // print "iteration ", i, " of ", n+1;
-        l:=#res[i-1];
-        for j in [2..l] do
-            // print "    iteration", j, " of ", l;
-            // add the terms coming from res[i-1]
-            temp:=vetav2(p,n+2-i,[res[i-1][j],&+(res[i-1][1..(j-1)])] : bintab:=bintab); // note that here it just eval. the pols.
-            // print "temp = ", temp;
-            for t in [i..(n+1)] do
-                if temp[t-i+1] ne 0 then
-                    Append(~res[t],temp[t-i+1]);
-                end if;
-            end for;
-        end for;
-        // res[i] is done!
-
-        // print res;
-    end for;
-    return [ &+x : x in res ];
-end function;
-
-
-// using vetav3
-function newWittProd3(v1,v2 : bintab:=[])
-    P:=Parent(v1[1]);
-    p:=Characteristic(P);
-    n:=#v1-1;
-    // initialize
-    res:=[ vRemoveZeros([ v1[j+1]^(p^(i-j))*v2[i-j+1]^(p^j) : j in [0..i] ]) : i in [0..n] ];
-
-    // print "initial res = ", res;
-
-    if n eq 1 then
-        // done
-        return [ &+x : x in res];
-    end if;
-    // print res;
-    // precompute the nec. binomials
-    if #bintab eq 0 then
-        // print "Computing bintab";
-        bintab:=BinTab(p,n-1);  // note only need n-1
-    end if;
-
-    for i in [3..(n+1)] do
-        // print "iteration ", i, " of ", n+1;
-        l:=#res[i-1];
-        for j in [2..l] do
-            // print "    iteration", j, " of ", l;
-            // add the terms coming from res[i-1]
-            temp:=vetav3(p,n+2-i,[res[i-1][j],&+(res[i-1][1..(j-1)])] : bintab:=bintab); // note that here it just eval. the pols.
-            // print "temp = ", temp;
-            for t in [i..(n+1)] do
-                if temp[t-i+1] ne 0 then
-                    Append(~res[t],temp[t-i+1]);
-                end if;
-            end for;
-        end for;
-        // res[i] is done!
-
-        // print res;
-    end for;
-    return [ &+x : x in res ];
-end function;
-
-
-
-function newWittNeg(v : pols:=[])
-    p := Characteristic(Parent(v[1]));
-    if p ne 2 then
-        return [ -x : x in v ];
-    end if;
-    n := #v;
-    P := Parent(v[1]);
-    vnone := [ P!1 : i in [1..n] ];
-    return newWittProd(vnone,v : pols:=pols);
-end function;
-
-
-function newWittNeg2(v : bintab:=[])
-    p := Characteristic(Parent(v[1]));
-    if p ne 2 then
-        return [ -x : x in v ];
-    end if;
-    n := #v;
-    P := Parent(v[1]);
-    vnone := [ P!1 : i in [1..n] ]; 
-    return newWittProd2(vnone,v : bintab:=bintab);
-end function;
-
-
-function newWittNeg3(v : bintab:=[])
-    p := Characteristic(Parent(v[1]));
-    if p ne 2 then
-        return [ -x : x in v ];
-    end if;
-    n := #v;
-    P := Parent(v[1]);
-    vnone := [ P!1 : i in [1..n] ]; 
-    return newWittProd3(vnone,v : bintab:=bintab);
-end function;
-
-
-function newWittInv(v : pols:=[])
-    P := Parent(v[1]);
-    p := Characteristic(P);
-    n := #v-1;
-
-    if #pols eq 0 then
-        //print "Computing etapols";
-        pols:=etapols(p,n-1); // NOTE: n-1 only!
-    end if;
-
-    res := [ v[1]^(-1) ];
-    PR := PolynomialRing(P);
-    x := PR.1; // variable
-
-    for i in [1..n] do
-        w1 := [ PR!v[j] : j in [1..(i+1)] ];
-        w2 := [ PR!res[j] : j in [1..i] ] cat [x];
-        coord := newWittProd(w1,w2 : pols:=pols)[i+1];
-        Append(~res,-Evaluate(coord,0)/v[1]^(p^i));
-    end for;
-    return res;
-end function;
-    
-
-
-function newWittInv2(v :  bintab:=[])
-    P := Parent(v[1]);
-    p := Characteristic(P);
-    n := #v-1;
-
-    if #bintab eq 0 then
-        // print "Computing bintab";
-        bintab:=BinTab(p,n-1);  // note only need n-1
-    end if;
-
-    res := [ v[1]^(-1) ];
-    PR := PolynomialRing(P);
-    x := PR.1; // variable
-
-    for i in [1..n] do
-        w1 := [ PR!v[j] : j in [1..(i+1)] ];
-        w2 := [ PR!res[j] : j in [1..i] ] cat [x];
-        coord := newWittProd2(w1,w2 : bintab:=bintab)[i+1];
-        Append(~res,-Evaluate(coord,0)/v[1]^(p^i));
-    end for;
-    return res;
-end function;
-    
-
-
-function newWittInv3(v :  bintab:=[])
-    P := Parent(v[1]);
-    p := Characteristic(P);
-    n := #v-1;
-
-    if #bintab eq 0 then
-        // print "Computing bintab";
-        bintab:=BinTab(p,n-1);  // note only need n-1
-    end if;
-
-    res := [ v[1]^(-1) ];
-    PR := PolynomialRing(P);
-    x := PR.1; // variable
-
-    for i in [1..n] do
-        w1 := [ PR!v[j] : j in [1..(i+1)] ];
-        w2 := [ PR!res[j] : j in [1..i] ] cat [x];
-        coord := newWittProd3(w1,w2 : bintab:=bintab)[i+1];
-        Append(~res,-Evaluate(coord,0)/v[1]^(p^i));
-    end for;
-    return res;
-end function;
-    
-
-
-
-// need to add inverses and powers!  (move to separate file)
