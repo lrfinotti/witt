@@ -687,7 +687,7 @@ function newWittProd(v1,v2 : pols:=[])
     // print res;
     // precompute the nec. pol.
     if #pols eq 0 then
-        print "Computing etapols";
+        // print "Computing etapols";
         pols:=etapols(p,n-1); // NOTE: n-1 only!
     end if;
 
@@ -804,4 +804,117 @@ function newWittProd3(v1,v2 : bintab:=[])
 end function;
 
 
-// need to add negative, inverses and powers!  (move to separate file)
+
+function newWittNeg(v : pols:=[])
+    p := Characteristic(Parent(v[1]));
+    if p ne 2 then
+        return [ -x : x in v ];
+    end if;
+    n := #v;
+    P := Parent(v[1]);
+    vnone := [ P!1 : i in [1..n] ];
+    return newWittProd(vnone,v : pols:=pols);
+end function;
+
+
+function newWittNeg2(v : bintab:=[])
+    p := Characteristic(Parent(v[1]));
+    if p ne 2 then
+        return [ -x : x in v ];
+    end if;
+    n := #v;
+    P := Parent(v[1]);
+    vnone := [ P!1 : i in [1..n] ]; 
+    return newWittProd2(vnone,v : bintab:=bintab);
+end function;
+
+
+function newWittNeg3(v : bintab:=[])
+    p := Characteristic(Parent(v[1]));
+    if p ne 2 then
+        return [ -x : x in v ];
+    end if;
+    n := #v;
+    P := Parent(v[1]);
+    vnone := [ P!1 : i in [1..n] ]; 
+    return newWittProd3(vnone,v : bintab:=bintab);
+end function;
+
+
+function newWittInv(v : pols:=[])
+    P := Parent(v[1]);
+    p := Characteristic(P);
+    n := #v-1;
+
+    if #pols eq 0 then
+        //print "Computing etapols";
+        pols:=etapols(p,n-1); // NOTE: n-1 only!
+    end if;
+
+    res := [ v[1]^(-1) ];
+    PR := PolynomialRing(P);
+    x := PR.1; // variable
+
+    for i in [1..n] do
+        w1 := [ PR!v[j] : j in [1..(i+1)] ];
+        w2 := [ PR!res[j] : j in [1..i] ] cat [x];
+        coord := newWittProd(w1,w2 : pols:=pols)[i+1];
+        Append(~res,-Evaluate(coord,0)/v[1]^(p^i));
+    end for;
+    return res;
+end function;
+    
+
+
+function newWittInv2(v :  bintab:=[])
+    P := Parent(v[1]);
+    p := Characteristic(P);
+    n := #v-1;
+
+    if #bintab eq 0 then
+        // print "Computing bintab";
+        bintab:=BinTab(p,n-1);  // note only need n-1
+    end if;
+
+    res := [ v[1]^(-1) ];
+    PR := PolynomialRing(P);
+    x := PR.1; // variable
+
+    for i in [1..n] do
+        w1 := [ PR!v[j] : j in [1..(i+1)] ];
+        w2 := [ PR!res[j] : j in [1..i] ] cat [x];
+        coord := newWittProd2(w1,w2 : bintab:=bintab)[i+1];
+        Append(~res,-Evaluate(coord,0)/v[1]^(p^i));
+    end for;
+    return res;
+end function;
+    
+
+
+function newWittInv3(v :  bintab:=[])
+    P := Parent(v[1]);
+    p := Characteristic(P);
+    n := #v-1;
+
+    if #bintab eq 0 then
+        // print "Computing bintab";
+        bintab:=BinTab(p,n-1);  // note only need n-1
+    end if;
+
+    res := [ v[1]^(-1) ];
+    PR := PolynomialRing(P);
+    x := PR.1; // variable
+
+    for i in [1..n] do
+        w1 := [ PR!v[j] : j in [1..(i+1)] ];
+        w2 := [ PR!res[j] : j in [1..i] ] cat [x];
+        coord := newWittProd3(w1,w2 : bintab:=bintab)[i+1];
+        Append(~res,-Evaluate(coord,0)/v[1]^(p^i));
+    end for;
+    return res;
+end function;
+    
+
+
+
+// need to add inverses and powers!  (move to separate file)
