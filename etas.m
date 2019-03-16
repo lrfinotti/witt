@@ -355,11 +355,13 @@ vetav2 := function(p,k,v : bintab:=[] )
         x3:=$$(p,k,[ &+v1, &+v2 ] : bintab:=bintab );
         res:=[ ];
         for i in [1..k] do
-            // print "i = ", i;
-            // print res;
-            // print Parent(x1[i]), Parent(x2[i]), Parent(x3[i]);
-            // print x1[i], x2[i], x3[i];
+            //print "i = ", i;
+            //print res;
+            //print Parent(x1[i]), Parent(x2[i]), Parent(x3[i]);
+            //print x1[i], x2[i], x3[i];
+            //print vRemoveZeros([ x1[i],x2[i],x3[i] ]);
             res[i]:=vRemoveZeros([ x1[i],x2[i],x3[i] ]);
+            //Append(~res,vRemoveZeros([ x1[i],x2[i],x3[i] ]));
         end for;
         delete x1,x2,x3,v1,v2;
         for i in [2..k] do

@@ -11,7 +11,7 @@ load 'etas.m';
 // ///////////////////////////////////////
 
 // using vetav
-function newWittSum(v1,v2 : pols:=[])
+function WittSum1(v1,v2 : pols:=[])
     P:=Parent(v1[1]);
     p:=Characteristic(P);
     n:=#v1-1;
@@ -50,7 +50,7 @@ end function;
 
 
 // using vetav2
-function newWittSum2(v1,v2 : bintab:=[])
+function WittSum2(v1,v2 : bintab:=[])
     P:=Parent(v1[1]);
     p:=Characteristic(P);
     n:=#v1-1;
@@ -85,7 +85,7 @@ end function;
 
 
 // using vetav3
-function newWittSum3(v1,v2 : bintab:=[])
+function WittSum3(v1,v2 : bintab:=[])
     P:=Parent(v1[1]);
     p:=Characteristic(P);
     n:=#v1-1;
@@ -125,7 +125,7 @@ end function;
 
 
 // using vetav
-function newWittProd(v1,v2 : pols:=[])
+function WittProd1(v1,v2 : pols:=[])
     P:=Parent(v1[1]);
     p:=Characteristic(P);
     n:=#v1-1;
@@ -173,7 +173,7 @@ end function;
 
 
 // using vetav2
-function newWittProd2(v1,v2 : bintab:=[])
+function WittProd2(v1,v2 : bintab:=[])
     P:=Parent(v1[1]);
     p:=Characteristic(P);
     n:=#v1-1;
@@ -216,7 +216,7 @@ end function;
 
 
 // using vetav3
-function newWittProd3(v1,v2 : bintab:=[])
+function WittProd3(v1,v2 : bintab:=[])
     P:=Parent(v1[1]);
     p:=Characteristic(P);
     n:=#v1-1;
@@ -264,7 +264,7 @@ end function;
 // NEGATIVES
 // ///////////////////////////////////////
 
-function newWittNeg(v : pols:=[])
+function WittNeg1(v : pols:=[])
     p := Characteristic(Parent(v[1]));
     if p ne 2 then
         return [ -x : x in v ];
@@ -272,11 +272,11 @@ function newWittNeg(v : pols:=[])
     n := #v;
     P := Parent(v[1]);
     vnone := [ P!1 : i in [1..n] ];
-    return newWittProd(vnone,v : pols:=pols);
+    return WittProd1(vnone,v : pols:=pols);
 end function;
 
 
-function newWittNeg2(v : bintab:=[])
+function WittNeg2(v : bintab:=[])
     p := Characteristic(Parent(v[1]));
     if p ne 2 then
         return [ -x : x in v ];
@@ -284,11 +284,11 @@ function newWittNeg2(v : bintab:=[])
     n := #v;
     P := Parent(v[1]);
     vnone := [ P!1 : i in [1..n] ]; 
-    return newWittProd2(vnone,v : bintab:=bintab);
+    return WittProd2(vnone,v : bintab:=bintab);
 end function;
 
 
-function newWittNeg3(v : bintab:=[])
+function WittNeg3(v : bintab:=[])
     p := Characteristic(Parent(v[1]));
     if p ne 2 then
         return [ -x : x in v ];
@@ -296,7 +296,7 @@ function newWittNeg3(v : bintab:=[])
     n := #v;
     P := Parent(v[1]);
     vnone := [ P!1 : i in [1..n] ]; 
-    return newWittProd3(vnone,v : bintab:=bintab);
+    return WittProd3(vnone,v : bintab:=bintab);
 end function;
 
 
@@ -306,7 +306,7 @@ end function;
 // INVERSES
 // ///////////////////////////////////////
 
-function newWittInv(v : pols:=[])
+function WittInv1(v : pols:=[])
     P := Parent(v[1]);
     p := Characteristic(P);
     n := #v-1;
@@ -323,7 +323,7 @@ function newWittInv(v : pols:=[])
     for i in [1..n] do
         w1 := [ PR!v[j] : j in [1..(i+1)] ];
         w2 := [ PR!res[j] : j in [1..i] ] cat [x];
-        coord := newWittProd(w1,w2 : pols:=pols)[i+1];
+        coord := WittProd1(w1,w2 : pols:=pols)[i+1];
         Append(~res,-Evaluate(coord,0)/v[1]^(p^i));
     end for;
     return res;
@@ -331,7 +331,7 @@ end function;
     
 
 
-function newWittInv2(v :  bintab:=[])
+function WittInv2(v :  bintab:=[])
     P := Parent(v[1]);
     p := Characteristic(P);
     n := #v-1;
@@ -348,7 +348,7 @@ function newWittInv2(v :  bintab:=[])
     for i in [1..n] do
         w1 := [ PR!v[j] : j in [1..(i+1)] ];
         w2 := [ PR!res[j] : j in [1..i] ] cat [x];
-        coord := newWittProd2(w1,w2 : bintab:=bintab)[i+1];
+        coord := WittProd2(w1,w2 : bintab:=bintab)[i+1];
         Append(~res,-Evaluate(coord,0)/v[1]^(p^i));
     end for;
     return res;
@@ -356,7 +356,7 @@ end function;
     
 
 
-function newWittInv3(v :  bintab:=[])
+function WittInv3(v :  bintab:=[])
     P := Parent(v[1]);
     p := Characteristic(P);
     n := #v-1;
@@ -373,7 +373,7 @@ function newWittInv3(v :  bintab:=[])
     for i in [1..n] do
         w1 := [ PR!v[j] : j in [1..(i+1)] ];
         w2 := [ PR!res[j] : j in [1..i] ] cat [x];
-        coord := newWittProd3(w1,w2 : bintab:=bintab)[i+1];
+        coord := WittProd3(w1,w2 : bintab:=bintab)[i+1];
         Append(~res,-Evaluate(coord,0)/v[1]^(p^i));
     end for;
     return res;
@@ -416,11 +416,11 @@ function WittSum(v,w : choice:=1, pols:=[], bintab:=[])
     end if;
     
     if choice eq 2 then
-        return newWittSum2(v,w :  bintab:=bintab);
+        return WittSum2(v,w :  bintab:=bintab);
     elif choice eq 3 then
-        return newWittSum3(v,w :  bintab:=bintab);
+        return WittSum3(v,w :  bintab:=bintab);
     else
-        return newWittSum(v,w :  pols:=pols);
+        return WittSum1(v,w :  pols:=pols);
     end if;
 end function;
 
@@ -447,11 +447,11 @@ function WittProd(v,w : choice:=1, pols:=[], bintab:=[])
     end if;
 
     if choice eq 2 then
-        return newWittProd2(v,w :  bintab:=bintab);
+        return WittProd2(v,w :  bintab:=bintab);
     elif choice eq 3 then
-        return newWittProd3(v,w :  bintab:=bintab);
+        return WittProd3(v,w :  bintab:=bintab);
     else
-        return newWittProd(v,w :  pols:=pols);
+        return WittProd1(v,w :  pols:=pols);
     end if;
 end function;
 
@@ -477,11 +477,11 @@ function WittNeg(v : choice:=1, pols:=[], bintab:=[])
     end if;
 
     if choice eq 2 then
-        return newWittNeg2(v :  bintab:=bintab);
+        return WittNeg2(v :  bintab:=bintab);
     elif choice eq 3 then
-        return newWittNeg3(v :  bintab:=bintab);
+        return WittNeg3(v :  bintab:=bintab);
     else
-        return newWittNeg(v :  pols:=pols);
+        return WittNeg1(v :  pols:=pols);
     end if;
 end function;
 
@@ -502,11 +502,11 @@ function WittNeg(v : choice:=1, pols:=[], bintab:=[])
     end if;
 
     if choice eq 2 then
-        return newWittInv2(v :  bintab:=bintab);
+        return WittInv2(v :  bintab:=bintab);
     elif choice eq 3 then
-        return newWittInv3(v :  bintab:=bintab);
+        return WittInv3(v :  bintab:=bintab);
     else
-        return newWittInv(v :  pols:=pols);
+        return WittInv1(v :  pols:=pols);
     end if;
 end function;
 

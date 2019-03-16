@@ -1,12 +1,13 @@
 // Routines to compute the Greenberg transform
 
 
-// need the auxiliary eta functions
-load 'etas.m';
+// need the auxiliary eta and witt functions
+load 'witt.m'; // this one calls eta.m
 
 
-function bin_tab(p,n,m)
+function bin_tab(n,m)
     // binomial table up to choose n and modulo m
+    // using Pascal's triangle
     F:=ResidueClassRing(m);
     res:=[[F!1],[F!1,F!1]];  // res[i][j]=bin(i-1,j-1)
     for i in [2..n] do
@@ -41,16 +42,12 @@ end function;
 
 
 
-function Pol_New_Form(f,p,n : primr:=[] )
+function Pol_New_Form(f,p,n)
     // f a polynomial in two variables over Z
     // converts to format to use with GT below
-    if #primr eq 0 then
-        primr:=GenPrimRoots(p,n+1);
-    end if;
-
     res:=[];
     for mon in Monomials(f) do
-        coef:=IntToWitt(MonomialCoefficient(f,mon),p,n+1 : primr:=primr);
+        coef:=IntToWitt(MonomialCoefficient(f,mon),p,n+1);
         Append(~res,[* coef, Degree(mon,1), Degree(mon,2) *]);
     end for;
     
@@ -64,11 +61,10 @@ end function;
 // GT -- using vetav
 
 
-function GT_der(f,p,i,r,n,tab,primr,pols)
+function GT_der(f,p,i,r,n,tab,pols)
     // to use to compute the GT
     // compute f^{(i,r-i)} (assuming 0<=i<=r)
     // needs to supply: table with binomials (tab)
-    //                  primitive roots (primr)
     //                  vector to perform sums of Witt vectors (vecP)
 
     if r eq 0 then
@@ -99,13 +95,13 @@ function GT_der(f,p,i,r,n,tab,primr,pols)
                     Append(~derf, [* [ coef[i] : i in [1..(n+1-r)] ] , degx-i, degy-(r-i) *]);
                 elif (b12 mod p^(n-r+1)) ne 0 then
                     // if the term is not zero...
-                    v1:=IntToWitt(b12,p,n+1-r : primr:=primr);
+                    v1:=IntToWitt(b12,p,n+1-r);
 
                     // print "v1 = ", v1;
                     // print "[ coef[",i,"]: i in [1..(n+1-r)] ] = ", [ coef[i] : i in [1..(n+1-r)] ];
                     // print "prod = ", newWittProd(v1,[ coef[i] : i in [1..(n+1-r)] ] : pols:=pols);
 
-                    Append(~derf,[* newWittProd(v1,[ coef[i] : i in [1..(n+1-r)] ] : pols:=pols) , degx-i, degy-(r-i) *]);
+                    Append(~derf,[* WittProd1(v1,[ coef[i] : i in [1..(n+1-r)] ] : pols:=pols) , degx-i, degy-(r-i) *]);
                 end if;
             end if;
         end for;
@@ -123,14 +119,14 @@ end function;
 
 
 
-function split_Ds(f,p,max,PR,primr)
+function split_Ds(f,p,max,PR)
     // given a polynomial f (likely over Z/p^n) returns
     // [ \xi_0(f) , \xi_1(f), ... , \xi_max(f) ]
     
     res:=[ PR!0 : i in [0..max] ];
     for mon in Monomials(f) do
         coef:=Integers()!(MonomialCoefficient(f,mon));
-        vcoef:=IntToWitt(coef,p,max+1 : primr:=primr);
+        vcoef:=IntToWitt(coef,p,max+1);
         for i in [1..(max+1)] do
             res[i]+:=PR!(vcoef[i])*PR!mon;
         end for;
@@ -142,7 +138,7 @@ end function;
 
 
 
-function GT_Ds(i,r,n,p,primr,PR)
+function GT_Ds(i,r,n,p,PR)
     // assumes r>=1!!!
 
     PR1:=PolynomialRing(ResidueClassRing(p^(n+1)),2*n+2);
@@ -163,7 +159,7 @@ function GT_Ds(i,r,n,p,primr,PR)
 
     // now, split each D_{s,n}^{(i,r-i)} into
     // [ D_{s,n,0}^{(i,r-i)}, ..., D_{r,n,n-s}^{(i,r-i)} ]
-    return [ split_Ds(f,p,n-r,PR,primr) : f in t ];
+    return [ split_Ds(f,p,n-r,PR) : f in t ];
 
 end function;
 
@@ -191,7 +187,9 @@ end function;
 
 
 
-function GT(f : pols:=[], primr:=[], tab:=[], vvars:=[])
+
+
+function GT1(f : pols:=[], tab:=[], vvars:=[])
     // f must be given by f:=[ ... , [[a0,a1,...,an],i,j] , ... ]
     n:=#(f[1][1])-1; // length of the coefficients - 1
     P:=Parent(f[1][1][1]);
@@ -206,71 +204,69 @@ function GT(f : pols:=[], primr:=[], tab:=[], vvars:=[])
                 [ "x" cat IntegerToString(i) : i in [0..n] ] cat 
                 [ "y" cat IntegerToString(i) : i in [0..n] ] );
 
-    maxdeg:=Max([ Max(t[2],t[3]) : t in f ]); // to find the binomial table size
+    maxdegx:=Max([t[2] : t in f]);
+    maxdegy:=Max([t[3] : t in f]);
+
+    maxdeg:=Max(maxdegx,maxdegy); // to find the binomial table size
 
     if #tab eq 0 then
-        tab:=bin_tab(p,maxdeg,p^(n+1)); // table of binomials to use
-    end if;
-
-    if #primr eq 0 then
-        primr:=GenPrimRoots(p,n+1); // (seems it needs length)
+        tab:=bin_tab(maxdeg,p^(n+1)); // table of binomials to use
     end if;
 
     res:=[ [] : s in [0..n] ];
 
     for r in [0..n] do
         for i in [0..r] do
-            
-            // first, compute the derivative
-            derf:=GT_der(f,p,i,r,n,tab,primr,pols);
+            if (i le maxdegx) and (r-i le maxdegy) then
+                // first, compute the derivative
+                derf:=GT_der(f,p,i,r,n,tab,pols);
 
-            // print "derf = ", derf;
-            
-            // now we need the Ds
-            Ds:=GT_Ds(i,r,n,p,primr,PR);
-            // Ds=[ [D_{r,n,0}^{(i,r-i)} , ... , D_{r,n,n-r}^{(i,r-i)}],
-            //      [D_{r+1,n,0}^{(i,r-i)} , ... , D_{r,n,n-r-1}^{(i,r-i)}],
-            //      ...,
-            //      [D_{n,n,0}^{(i,r-i)}] ]
+                // print "derf = ", derf;
+                
+                // now we need the Ds
+                Ds:=GT_Ds(i,r,n,p,PR);
+                // Ds=[ [D_{r,n,0}^{(i,r-i)} , ... , D_{r,n,n-r}^{(i,r-i)}],
+                //      [D_{r+1,n,0}^{(i,r-i)} , ... , D_{r,n,n-r-1}^{(i,r-i)}],
+                //      ...,
+                //      [D_{n,n,0}^{(i,r-i)}] ]
 
 
-            // print "Ds = ", Ds;
+                // print "Ds = ", Ds;
 
-            for m in [r..n] do
-                for j in [r..m] do
-                    for k in [r..j] do
+                for m in [r..n] do
+                    for j in [r..m] do
+                        for k in [r..j] do
 
-                        // print "r, i, m, j, k = ", r, i, m, j, k;
+                            // print "r, i, m, j, k = ", r, i, m, j, k;
 
-                        // split the derivative (i.e., the \xi_i's)
-                        // also takes care of the Frob and evalutation
-                        vt:=&+[ (t[1][m-j+1])^(p^j)*(PR.1)^(t[2]*p^m)*(PR.(n+2))^(t[3]*p^m) : t in derf ];
+                            // split the derivative (i.e., the \xi_i's)
+                            // also takes care of the Frob and evalutation
+                            vt:=&+[ (t[1][m-j+1])^(p^j)*(PR.1)^(t[2]*p^m)*(PR.(n+2))^(t[3]*p^m) : t in derf ];
 
-                        // create a vector to evaluate D_{r,n}
-                        // to get D_{r,m}
-                        v:=< PR!0 : s in [1..(2*n+2)] >;
-                        for s in [2..(m+1)] do
-                            v[s]:=PR.s;
-                            v[s+n+1]:=PR.(s+n+1);
-                        end for;
-                        
-                        // get D_{r,m} from D_{r,n}
-                        tmp:=Evaluate(Ds[k-r+1][j-k+1],v);
-                        tmp:=Pol_Root(tmp,p^(n-m));
+                            // create a vector to evaluate D_{r,n}
+                            // to get D_{r,m}
+                            v:=< PR!0 : s in [1..(2*n+2)] >;
+                            for s in [2..(m+1)] do
+                                v[s]:=PR.s;
+                                v[s+n+1]:=PR.(s+n+1);
+                            end for;
+                            
+                            // get D_{r,m} from D_{r,n}
+                            tmp:=Evaluate(Ds[k-r+1][j-k+1],v);
+                            tmp:=Pol_Root(tmp,p^(n-m));
 
-                        if #vvars ne 0 then 
-                            res[m+1]:=res[m+1] cat [ Evaluate(term,vvars) : term in Terms(vt*tmp)];
-                        else
-                            res[m+1]:=res[m+1] cat Terms(vt*tmp);
-                        end if;
-                        
-                    end for; // k
-                end for; // j
-            end for; // m
+                            if #vvars ne 0 then 
+                                res[m+1]:=res[m+1] cat [ Evaluate(term,vvars) : term in Terms(vt*tmp)];
+                            else
+                                res[m+1]:=res[m+1] cat Terms(vt*tmp);
+                            end if;
+                            
+                        end for; // k
+                        delete tmp, v, vt;
+                    end for; // j
+                end for; // m
+            end if;
         end for; // i
-
-        delete tmp, v, vt;
-
     end for; // r
 
     // now add the etas...
@@ -303,15 +299,15 @@ end function;
 
 
 
+
 // ////////////////////////////////////////////////////
 // using vetav2
 
 
-function GT_der2(f,p,i,r,n,tab,primr,bintab)
+function GT_der2(f,p,i,r,n,tab,bintab)
     // to use to compute the GT
     // compute f^{(i,r-i)} (assuming 0<=i<=r)
     // needs to supply: table with binomials (tab)
-    //                  primitive roots (primr)
     //                  vector to perform sums of Witt vectors (vecP)
 
     if r eq 0 then
@@ -342,13 +338,13 @@ function GT_der2(f,p,i,r,n,tab,primr,bintab)
                     Append(~derf, [* [ coef[i] : i in [1..(n+1-r)] ] , degx-i, degy-(r-i) *]);
                 elif (b12 mod p^(n-r+1)) ne 0 then
                     // if the term is not zero...
-                    v1:=IntToWitt(b12,p,n+1-r : primr:=primr);
+                    v1:=IntToWitt(b12,p,n+1-r);
 
                     // print "v1 = ", v1;
                     // print "[ coef[",i,"]: i in [1..(n+1-r)] ] = ", [ coef[i] : i in [1..(n+1-r)] ];
                     // print "prod = ", newWittProd(v1,[ coef[i] : i in [1..(n+1-r)] ] : pols:=pols);
 
-                    Append(~derf,[* newWittProd2(v1,[ coef[i] : i in [1..(n+1-r)] ] : bintab:=bintab) , degx-i, degy-(r-i) *]);
+                    Append(~derf,[* WittProd2(v1,[ coef[i] : i in [1..(n+1-r)] ] : bintab:=bintab) , degx-i, degy-(r-i) *]);
                 end if;
             end if;
         end for;
@@ -366,14 +362,14 @@ end function;
 
 
 
-function split_Ds2(f,p,max,PR,primr)
+function split_Ds2(f,p,max,PR)
     // given a polynomial f (likely over Z/p^n) returns
     // [ \xi_0(f) , \xi_1(f), ... , \xi_max(f) ]
     
     res:=[ PR!0 : i in [0..max] ];
     for mon in Monomials(f) do
         coef:=Integers()!(MonomialCoefficient(f,mon));
-        vcoef:=IntToWitt(coef,p,max+1 : primr:=primr);
+        vcoef:=IntToWitt(coef,p,max+1);
         for i in [1..(max+1)] do
             res[i]+:=PR!(vcoef[i])*PR!mon;
         end for;
@@ -385,7 +381,7 @@ end function;
 
 
 
-function GT_Ds2(i,r,n,p,primr,PR)
+function GT_Ds2(i,r,n,p,PR)
     // assumes r>=1!!!
 
     PR1:=PolynomialRing(ResidueClassRing(p^(n+1)),2*n+2);
@@ -406,14 +402,15 @@ function GT_Ds2(i,r,n,p,primr,PR)
 
     // now, split each D_{s,n}^{(i,r-i)} into
     // [ D_{s,n,0}^{(i,r-i)}, ..., D_{r,n,n-s}^{(i,r-i)} ]
-    return [ split_Ds2(f,p,n-r,PR,primr) : f in t ];
+    return [ split_Ds2(f,p,n-r,PR) : f in t ];
 
 end function;
 
 
 
 
-function GT2(f : bintab:=[], primr:=[], tab:=[], vvars:=[])
+
+function GT2(f : bintab:=[], tab:=[], vvars:=[])
     // f must be given by f:=[ ... , [[a0,a1,...,an],i,j] , ... ]
     n:=#(f[1][1])-1; // length of the coefficients - 1
     P:=Parent(f[1][1][1]);
@@ -428,70 +425,69 @@ function GT2(f : bintab:=[], primr:=[], tab:=[], vvars:=[])
                 [ "x" cat IntegerToString(i) : i in [0..n] ] cat 
                 [ "y" cat IntegerToString(i) : i in [0..n] ] );
 
-    maxdeg:=Max([ Max(t[2],t[3]) : t in f ]); // to find the binomial table size
+    maxdegx:=Max([t[2] : t in f]);
+    maxdegy:=Max([t[3] : t in f]);
+
+    maxdeg:=Max(maxdegx,maxdegy); // to find the binomial table size
 
     if #tab eq 0 then
-        tab:=bin_tab(p,maxdeg,p^(n+1)); // table of binomials to use
-    end if;
-
-    if #primr eq 0 then
-        primr:=GenPrimRoots(p,n+1); // (seems it needs length)
+        tab:=bin_tab(maxdeg,p^(n+1)); // table of binomials to use
     end if;
 
     res:=[ [] : s in [0..n] ];
 
     for r in [0..n] do
         for i in [0..r] do
-            
-            // first, compute the derivative
-            derf:=GT_der2(f,p,i,r,n,tab,primr,bintab);
+            if (i le maxdegx) and (r-i le maxdegy) then            
+                // first, compute the derivative
+                derf:=GT_der2(f,p,i,r,n,tab,bintab);
 
-            // print "derf = ", derf;
-            
-            // now we need the Ds
-            Ds:=GT_Ds2(i,r,n,p,primr,PR);
-            // Ds=[ [D_{r,n,0}^{(i,r-i)} , ... , D_{r,n,n-r}^{(i,r-i)}],
-            //      [D_{r+1,n,0}^{(i,r-i)} , ... , D_{r,n,n-r-1}^{(i,r-i)}],
-            //      ...,
-            //      [D_{n,n,0}^{(i,r-i)}] ]
+                // print "derf = ", derf;
+                
+                // now we need the Ds
+                Ds:=GT_Ds2(i,r,n,p,PR);
+                // Ds=[ [D_{r,n,0}^{(i,r-i)} , ... , D_{r,n,n-r}^{(i,r-i)}],
+                //      [D_{r+1,n,0}^{(i,r-i)} , ... , D_{r,n,n-r-1}^{(i,r-i)}],
+                //      ...,
+                //      [D_{n,n,0}^{(i,r-i)}] ]
 
 
-            // print "Ds = ", Ds;
+                // print "Ds = ", Ds;
 
-            for m in [r..n] do
-                for j in [r..m] do
-                    for k in [r..j] do
+                for m in [r..n] do
+                    for j in [r..m] do
+                        for k in [r..j] do
 
-                        // print "r, i, m, j, k = ", r, i, m, j, k;
+                            // print "r, i, m, j, k = ", r, i, m, j, k;
 
-                        // split the derivative (i.e., the \xi_i's)
-                        // also takes care of the Frob and evalutation
-                        vt:=&+[ (t[1][m-j+1])^(p^j)*(PR.1)^(t[2]*p^m)*(PR.(n+2))^(t[3]*p^m) : t in derf ];
+                            // split the derivative (i.e., the \xi_i's)
+                            // also takes care of the Frob and evalutation
+                            vt:=&+[ (t[1][m-j+1])^(p^j)*(PR.1)^(t[2]*p^m)*(PR.(n+2))^(t[3]*p^m) : t in derf ];
 
-                        // create a vector to evaluate D_{r,n}
-                        // to get D_{r,m}
-                        v:=< PR!0 : s in [1..(2*n+2)] >;
-                        for s in [2..(m+1)] do
-                            v[s]:=PR.s;
-                            v[s+n+1]:=PR.(s+n+1);
-                        end for;
-                        
-                        // get D_{r,m} from D_{r,n}
-                        tmp:=Evaluate(Ds[k-r+1][j-k+1],v);
-                        tmp:=Pol_Root(tmp,p^(n-m));
+                            // create a vector to evaluate D_{r,n}
+                            // to get D_{r,m}
+                            v:=< PR!0 : s in [1..(2*n+2)] >;
+                            for s in [2..(m+1)] do
+                                v[s]:=PR.s;
+                                v[s+n+1]:=PR.(s+n+1);
+                            end for;
+                            
+                            // get D_{r,m} from D_{r,n}
+                            tmp:=Evaluate(Ds[k-r+1][j-k+1],v);
+                            tmp:=Pol_Root(tmp,p^(n-m));
 
-                        if #vvars ne 0 then 
-                            res[m+1]:=res[m+1] cat [ Evaluate(term,vvars) : term in Terms(vt*tmp)];
-                        else
-                            res[m+1]:=res[m+1] cat Terms(vt*tmp);
-                        end if;
-                        
-                    end for; // k
-                end for; // j
-            end for; // m
+                            if #vvars ne 0 then 
+                                res[m+1]:=res[m+1] cat [ Evaluate(term,vvars) : term in Terms(vt*tmp)];
+                            else
+                                res[m+1]:=res[m+1] cat Terms(vt*tmp);
+                            end if;
+                            
+                        end for; // k
+                        delete tmp, v, vt;
+                    end for; // j
+                end for; // m
+            end if;
         end for; // i
-
-        delete tmp, v, vt;
 
     end for; // r
 
@@ -524,6 +520,7 @@ end function;
 
 
 
+
 // ///////////////////////////////////////////////////
 // this version tries to store some of the computed
 // terms in memory to try to speed the computations,
@@ -532,11 +529,10 @@ end function;
 
 
 
-function GT_der3(f,p,i,r,n,tab,primr,pols)
+function GT_der3(f,p,i,r,n,tab,bintab)
     // to use to compute the GT
     // compute f^{(i,r-i)} (assuming 0<=i<=r)
     // needs to supply: table with binomials (tab)
-    //                  primitive roots (primr)
     //                  vector to perform sums of Witt vectors (vecP)
 
     if r eq 0 then
@@ -567,13 +563,13 @@ function GT_der3(f,p,i,r,n,tab,primr,pols)
                     Append(~derf, [* [ coef[i] : i in [1..(n+1-r)] ] , degx-i, degy-(r-i) *]);
                 elif (b12 mod p^(n-r+1)) ne 0 then
                     // if the term is not zero...
-                    v1:=IntToWitt(b12,p,n+1-r : primr:=primr);
+                    v1:=IntToWitt(b12,p,n+1-r);
 
                     // print "v1 = ", v1;
                     // print "[ coef[",i,"]: i in [1..(n+1-r)] ] = ", [ coef[i] : i in [1..(n+1-r)] ];
                     // print "prod = ", newWittProd(v1,[ coef[i] : i in [1..(n+1-r)] ] : pols:=pols);
 
-                    Append(~derf,[* newWittProd(v1,[ coef[i] : i in [1..(n+1-r)] ] : pols:=pols) , degx-i, degy-(r-i) *]);
+                    Append(~derf,[* WittProd3(v1,[ coef[i] : i in [1..(n+1-r)] ] : bintab:=bintab) , degx-i, degy-(r-i) *]);
                 end if;
             end if;
         end for;
@@ -591,7 +587,7 @@ end function;
 
 
 
-function split_Ds3(f,p,max,primr)
+function split_Ds3(f,p,max)
     // given a polynomial f (likely over Z/p^n) returns
     // [ \xi_0(f) , \xi_1(f), ... , \xi_max(f) ]
     
@@ -603,7 +599,7 @@ function split_Ds3(f,p,max,primr)
 
     for mon in Monomials(f) do
         coef:=Integers()!(MonomialCoefficient(f,mon));
-        vcoef:=IntToWitt(coef,p,max+1 : primr:=primr);
+        vcoef:=IntToWitt(coef,p,max+1);
         for i in [1..(max+1)] do
             res[i]+:=PR3!(vcoef[i])*PR3!mon;
         end for;
@@ -615,7 +611,7 @@ end function;
 
 
 
-function GT_Ds3(n,r,p,primr,PR)
+function GT_Ds3(n,r,p,PR)
     // assumes r>=1!!!
 
     vecDs:=AssociativeArray(); // will have all the D[n,r,i,k,t]
@@ -641,7 +637,7 @@ function GT_Ds3(n,r,p,primr,PR)
         tmp1:=vx[i+1]*tmp;
         for k in [r..n] do
             // print "splid Ds";
-            tmp2:=split_Ds3(Coefficient(tmp1,k),p,n-k,primr);
+            tmp2:=split_Ds3(Coefficient(tmp1,k),p,n-k);
             for t in [0..(n-k)] do
                 vecDs[[n,r,i,k,t]]:=PR!tmp2[t+1];
             end for;
@@ -657,14 +653,14 @@ end function;
 
 
 
-function GT3(f : pols:=[], primr:=[], tab:=[], vvars:=[])
+function GT3(f : bintab:=[], tab:=[], vvars:=[])
     // f must be given by f:=[ ... , [[a0,a1,...,an],i,j] , ... ]
     n:=#(f[1][1])-1; // length of the coefficients - 1
     P:=Parent(f[1][1][1]);
     p:=Characteristic(P);
 
-    if #pols eq 0 then
-        pols:=etapols(p,n);
+    if #bintab eq 0 then
+        bintab:=BinTab(p,n);
     end if;
 
     PR:=PolynomialRing(P,2*n+2);
@@ -672,14 +668,13 @@ function GT3(f : pols:=[], primr:=[], tab:=[], vvars:=[])
                 [ "x" cat IntegerToString(i) : i in [0..n] ] cat 
                 [ "y" cat IntegerToString(i) : i in [0..n] ] );
 
-    maxdeg:=Max([ Max(t[2],t[3]) : t in f ]); // to find the binomial table size
+    maxdegx:=Max([t[2] : t in f]);
+    maxdegy:=Max([t[3] : t in f]);
+
+    maxdeg:=Max(maxdegx,maxdegy); // to find the binomial table size
 
     if #tab eq 0 then
-        tab:=bin_tab(p,maxdeg,p^(n+1)); // table of binomials to use
-    end if;
-
-    if #primr eq 0 then
-        primr:=GenPrimRoots(p,n+1); // (seems it needs length)
+        tab:=bin_tab(maxdeg,p^(n+1)); // table of binomials to use
     end if;
 
     res:=[ [] : s in [0..n] ];
@@ -687,53 +682,55 @@ function GT3(f : pols:=[], primr:=[], tab:=[], vvars:=[])
     for r in [0..n] do
         
         // print "compute Ds: r, n = ", r, n;
-        vecDs:=GT_Ds3(n,r,p,primr,PR);
+        vecDs:=GT_Ds3(n,r,p,PR);
 
         for i in [0..r] do
-            
-            // first, compute the derivative
-            // print "compute der.";
-            derf:=GT_der3(f,p,i,r,n,tab,primr,pols);
+            if (i le maxdegx) and (r-i le maxdegy) then
+                
+                // first, compute the derivative
+                // print "compute der.";
+                derf:=GT_der3(f,p,i,r,n,tab,bintab);
 
-            // print "derf = ", derf;
-            
-            for m in [r..n] do
-                for j in [r..m] do
-                    for k in [r..j] do
+                // print "derf = ", derf;
+                
+                for m in [r..n] do
+                    for j in [r..m] do
+                        for k in [r..j] do
 
-                        // print "r, i, m, j, k = ", r, i, m, j, k;
+                            // print "r, i, m, j, k = ", r, i, m, j, k;
 
-                        // split the derivative (i.e., the \xi_i's)
-                        // also takes care of the Frob and evalutation
-                        vt:=&+[ (t[1][m-j+1])^(p^j)*(PR.1)^(t[2]*p^m)*(PR.(n+2))^(t[3]*p^m) : t in derf ];
+                            // split the derivative (i.e., the \xi_i's)
+                            // also takes care of the Frob and evalutation
+                            vt:=&+[ (t[1][m-j+1])^(p^j)*(PR.1)^(t[2]*p^m)*(PR.(n+2))^(t[3]*p^m) : t in derf ];
 
-                        // create a vector to evaluate D_{r,n}
-                        // to get D_{r,m}
-                        v:=< PR!0 : s in [1..(2*n+2)] >;
-                        for s in [2..(m+1)] do
-                            v[s]:=PR.s;
-                            v[s+n+1]:=PR.(s+n+1);
-                        end for;
-                        
-                        // get D_{r,m} from D_{r,n}
-                        // print "evaluate Ds";
-                        tmp:=Evaluate(vecDs[[n,r,i,k,j-k]],v);
-                        // print "pol root";
-                        tmp:=Pol_Root(tmp,p^(n-m));
+                            // create a vector to evaluate D_{r,n}
+                            // to get D_{r,m}
+                            v:=< PR!0 : s in [1..(2*n+2)] >;
+                            for s in [2..(m+1)] do
+                                v[s]:=PR.s;
+                                v[s+n+1]:=PR.(s+n+1);
+                            end for;
+                            
+                            // get D_{r,m} from D_{r,n}
+                            // print "evaluate Ds";
+                            tmp:=Evaluate(vecDs[[n,r,i,k,j-k]],v);
+                            // print "pol root";
+                            tmp:=Pol_Root(tmp,p^(n-m));
 
-                        if #vvars ne 0 then
-                            // print "evaluate";
-                            res[m+1]:=res[m+1] cat [ Evaluate(term,vvars) : term in Terms(vt*tmp)];
-                        else
-                            res[m+1]:=res[m+1] cat Terms(vt*tmp);
-                        end if;
-                        
-                    end for; // k
-                end for; // j
-            end for; // m
+                            if #vvars ne 0 then
+                                // print "evaluate";
+                                res[m+1]:=res[m+1] cat [ Evaluate(term,vvars) : term in Terms(vt*tmp)];
+                            else
+                                res[m+1]:=res[m+1] cat Terms(vt*tmp);
+                            end if;
+                            
+                        end for; // k
+                        delete tmp, v, vt;
+                    end for; // j
+                end for; // m
+            end if;
         end for; // i
 
-        delete tmp, v, vt;
 
     end for; // r
 
@@ -746,7 +743,7 @@ function GT3(f : pols:=[], primr:=[], tab:=[], vvars:=[])
         // print "res[", i, "] = ", res[i];
 
         //print "compute etas";
-        ve:=vetav(p,n-i+1,res[i] : pols:=pols);
+        ve:=vetav3(p,n-i+1,res[i] : bintab:=bintab);
         
         // print "ve = ", ve;
 
@@ -757,11 +754,71 @@ function GT3(f : pols:=[], primr:=[], tab:=[], vvars:=[])
         end for;
 
         // don't need all pols anymore
-        pols:=pols[1..(n-i)];
-
+        bintab:=bintab[1..(n-i)];
     end for;
 
     return [ &+t : t in res ];
 
 end function; 
 
+
+// /////////////////////////////////////////////////
+// WRAPPERS
+// Use a single function to perform the operations
+// /////////////////////////////////////////////////
+
+function GT(f : choice:=1, pols:=[], bintab:=[], tab:=[], vvars:=[])
+    if choice eq 2 then
+        return GT2(f : bintab:=bintab, tab:=tab, vvars:=vvars);
+    elif choice eq 3 then
+        return GT3(f : bintab:=bintab, tab:=tab, vvars:=vvars);
+    else
+        return GT(f : pols:=pols, tab:=tab, vvars:=vvars);
+    end if;
+end function;
+
+
+// ///////////////////////////////////////
+// POWERS
+// ///////////////////////////////////////
+
+
+function WittPower1(v,k : pols:=pols)
+    p:=Characteristic(Parent(v[1]));
+    F:=GF(p);
+    l := #v;
+    vone := [ F!1 ] cat [ F!0 : i in [2..l]];
+    vzero:=[ F!0 : i in [1..l] ];
+    return GT1([ [* vone, k, 0 *]]: pols:=pols, vvars:=v cat vzero);
+end function;
+
+
+function WittPower2(v,k : bintab:=bintab)
+    p:=Characteristic(Parent(v[1]));
+    F:=GF(p);
+    l := #v;
+    vone := [ F!1 ] cat [ F!0 : i in [2..l]];
+    vzero:=[ F!0 : i in [1..l] ];
+    return GT2([ [* vone, k, 0 *]]: bintab:=bintab, vvars:=v cat vzero);
+end function;
+
+function WittPower3(v,k : bintab:=bintab)
+    p:=Characteristic(Parent(v[1]));
+    F:=GF(p);
+    l := #v;
+    vone := [ F!1 ] cat [ F!0 : i in [2..l]];
+    vzero:=[ F!0 : i in [1..l] ];
+    return GT3([ [* vone, k, 0 *]]: bintab:=bintab, vvars:=v cat vzero);
+end function;
+
+
+
+function WittPower(v,k : choice:=1, pols:=[], bintab:=[])
+    if choice eq 2 then
+        return WittPower2(v, k : bintab:=bintab);
+    elif choice eq 3 then
+        return WittPower2(v, k : bintab:=bintab);
+    else
+        return WittPower1(v, k : pols:=pols);
+    end if;
+end function;    
