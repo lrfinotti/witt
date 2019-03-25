@@ -773,7 +773,7 @@ function GT(f : choice:=1, pols:=[], bintab:=[], tab:=[], vvars:=[])
     elif choice eq 3 then
         return GT3(f : bintab:=bintab, tab:=tab, vvars:=vvars);
     else
-        return GT(f : pols:=pols, tab:=tab, vvars:=vvars);
+        return GT1(f : pols:=pols, tab:=tab, vvars:=vvars);
     end if;
 end function;
 
