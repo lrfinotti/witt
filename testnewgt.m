@@ -3,9 +3,9 @@ P<x,y>:=PolynomialRing(Integers(),2);
 f:=x^10-5*x^2+x-1;
 //f:=x^3*y + y^2 -5*x + 2*y -1;
 
-p:=2;
+p:=7;
 k:=3;
-n:=11;
+n:=7;
 ff:=Pol_New_Form(f,p,n);
 F:=GF(p^k);
 v:=[ Random(F) : i in [0..n] ];

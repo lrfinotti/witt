@@ -181,8 +181,8 @@ function vRemoveZeros(v)
     if #tmp ne 0 then
         return tmp;
     else
-        //return [ Parent(v[1])!0 ];
-        return [ 0 ];
+        return [ Parent(v[1])!0 ];
+        //return [ 0 ];
     end if;
 end function;
 
@@ -512,12 +512,12 @@ procedure vetav3p(p,k,v,~pre : bintab:=[] )
                     //     end for;
                     // end for;
                     // delete temp;
-                    if not IsDefined(pre,<k-i+1,res[i-1]>) then
+                    if not IsDefined(pre,<k-i+1,vRemoveZeros(res[i-1])>) then
                         $$(p,k-i+1,res[i-1],~pre : bintab:=bintab );
                     end if;
                     for t in [i..k] do
-                        if pre[<t-i+1,res[i-1]>] ne 0 then
-                            Append(~res[t],pre[<t-i+1,res[i-1]>]);
+                        if pre[<t-i+1,vRemoveZeros(res[i-1])>] ne 0 then
+                            Append(~res[t],pre[<t-i+1,vRemoveZeros(res[i-1])>]);
                         end if;
                     end for;
                 end for;
