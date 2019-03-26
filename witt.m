@@ -316,7 +316,7 @@ function WittInv1(v : pols:=[])
         pols:=etapols(p,n-1); // NOTE: n-1 only!
     end if;
 
-    res := [ v[1]^(-1) ];
+    res := [ 1/v[1] ];
     PR := PolynomialRing(P);
     x := PR.1; // variable
 
@@ -341,7 +341,7 @@ function WittInv2(v :  bintab:=[])
         bintab:=BinTab(p,n-1);  // note only need n-1
     end if;
 
-    res := [ v[1]^(-1) ];
+    res := [ 1/v[1] ];
     PR := PolynomialRing(P);
     x := PR.1; // variable
 
@@ -366,7 +366,7 @@ function WittInv3(v :  bintab:=[])
         bintab:=BinTab(p,n-1);  // note only need n-1
     end if;
 
-    res := [ v[1]^(-1) ];
+    res := [ 1/v[1] ];
     PR := PolynomialRing(P);
     x := PR.1; // variable
 
