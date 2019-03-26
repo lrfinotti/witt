@@ -486,7 +486,7 @@ function WittNeg(v : choice:=1, pols:=[], bintab:=[])
 end function;
 
 
-function WittNeg(v : choice:=1, pols:=[], bintab:=[])
+function WittInv(v : choice:=1, pols:=[], bintab:=[])
     // choice (of algorithms): 1, 2 or 3
     // for vetav, vetav2 or vetav3 respectively
     // add sanity check?
