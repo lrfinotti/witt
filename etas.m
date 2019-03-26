@@ -181,8 +181,11 @@ function vRemoveZeros(v)
     if #tmp ne 0 then
         return tmp;
     else
-        return [ Parent(v[1])!0 ];
-        //return [ 0 ];
+        if #v eq 0 then
+            return [ 0 ];
+        else
+            return [ Parent(v[1])!0 ];
+        end if;
     end if;
 end function;
 
