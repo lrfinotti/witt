@@ -814,6 +814,22 @@ end function;
 
 
 function WittPower(v,k : choice:=1, pols:=[], bintab:=[])
+
+    P := Parent(v[1]);
+
+    // if over a finite field, perform in Zq
+    if IsFinite(P) and IsField(P) then
+        p:=Characteristic(P);
+        n:=#v-1;
+        d:=Degree(P);
+        Zp:=pAdicRing(p : Precision:=n+1);
+        Zq<aa>:= ext<Zp | d>;
+        v1 := WittVToSeries(v : Zq:=Zq);
+        tmp := SeriesToWittV(v1^k);
+        return [ P!x : x in tmp ];
+    end if;
+
+
     if choice eq 2 then
         return WittPower2(v, k : bintab:=bintab);
     elif choice eq 3 then
