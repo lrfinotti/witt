@@ -47,7 +47,7 @@ function Pol_GT_Form(f,p,n)
     // converts to format to use with GT below
     res:=[];
     for mon in Monomials(f) do
-        coef:=IntToWitt(MonomialCoefficient(f,mon),p,n+1);
+        coef:=IntToWitt(MonomialCoefficient(f,mon),p,n);
         Append(~res,[* coef, Degree(mon,1), Degree(mon,2) *]);
     end for;
     
@@ -95,7 +95,7 @@ function GT_der(f,p,i,r,n,tab,pols)
                     Append(~derf, [* [ coef[i] : i in [1..(n+1-r)] ] , degx-i, degy-(r-i) *]);
                 elif (b12 mod p^(n-r+1)) ne 0 then
                     // if the term is not zero...
-                    v1:=IntToWitt(b12,p,n+1-r);
+                    v1:=IntToWitt(b12,p,n-r);
 
                     // print "v1 = ", v1;
                     // print "[ coef[",i,"]: i in [1..(n+1-r)] ] = ", [ coef[i] : i in [1..(n+1-r)] ];
@@ -126,7 +126,7 @@ function split_Ds(f,p,max,PR)
     res:=[ PR!0 : i in [0..max] ];
     for mon in Monomials(f) do
         coef:=Integers()!(MonomialCoefficient(f,mon));
-        vcoef:=IntToWitt(coef,p,max+1);
+        vcoef:=IntToWitt(coef,p,max);
         for i in [1..(max+1)] do
             res[i]+:=PR!(vcoef[i])*PR!mon;
         end for;
@@ -338,7 +338,7 @@ function GT_der2(f,p,i,r,n,tab,bintab)
                     Append(~derf, [* [ coef[i] : i in [1..(n+1-r)] ] , degx-i, degy-(r-i) *]);
                 elif (b12 mod p^(n-r+1)) ne 0 then
                     // if the term is not zero...
-                    v1:=IntToWitt(b12,p,n+1-r);
+                    v1:=IntToWitt(b12,p,n-r);
 
                     // print "v1 = ", v1;
                     // print "[ coef[",i,"]: i in [1..(n+1-r)] ] = ", [ coef[i] : i in [1..(n+1-r)] ];
@@ -369,7 +369,7 @@ function split_Ds2(f,p,max,PR)
     res:=[ PR!0 : i in [0..max] ];
     for mon in Monomials(f) do
         coef:=Integers()!(MonomialCoefficient(f,mon));
-        vcoef:=IntToWitt(coef,p,max+1);
+        vcoef:=IntToWitt(coef,p,max);
         for i in [1..(max+1)] do
             res[i]+:=PR!(vcoef[i])*PR!mon;
         end for;
@@ -563,7 +563,7 @@ function GT_der3(f,p,i,r,n,tab,bintab)
                     Append(~derf, [* [ coef[i] : i in [1..(n+1-r)] ] , degx-i, degy-(r-i) *]);
                 elif (b12 mod p^(n-r+1)) ne 0 then
                     // if the term is not zero...
-                    v1:=IntToWitt(b12,p,n+1-r);
+                    v1:=IntToWitt(b12,p,n-r);
 
                     // print "v1 = ", v1;
                     // print "[ coef[",i,"]: i in [1..(n+1-r)] ] = ", [ coef[i] : i in [1..(n+1-r)] ];
@@ -599,7 +599,7 @@ function split_Ds3(f,p,max)
 
     for mon in Monomials(f) do
         coef:=Integers()!(MonomialCoefficient(f,mon));
-        vcoef:=IntToWitt(coef,p,max+1);
+        vcoef:=IntToWitt(coef,p,max);
         for i in [1..(max+1)] do
             res[i]+:=PR3!(vcoef[i])*PR3!mon;
         end for;

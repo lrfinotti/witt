@@ -57,10 +57,10 @@ end function;
 
 
 
-function IntToWitt(n,p,l)
-    Zp := pAdicRing(p : Precision:=l);
+function IntToWitt(k,p,n)
+    Zp := pAdicRing(p : Precision:=n+1);
     F:=GF(p);
-    return SeriesToWittV(Zp!n : F:=F);
+    return SeriesToWittV(Zp!k : F:=F);
 end function;
 
 
@@ -284,7 +284,7 @@ function BinTab(p,k)
             Append(~tmp,tmp[j-1]*a*b^(-1)); // add next binomial
             delete a, b;
         end for;
-        Append(~res,[ IntToWitt(-ZZ!(tmp[j]),p,Valuation(j,p)+1)[Valuation(j,p)+1] : j in [1..#tmp] ]); // conv to Witt vec and take right coord
+        Append(~res,[ IntToWitt(-ZZ!(tmp[j]),p,Valuation(j,p))[Valuation(j,p)+1] : j in [1..#tmp] ]); // conv to Witt vec and take right coord
 
         delete tmp;
 

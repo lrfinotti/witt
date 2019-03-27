@@ -98,7 +98,7 @@ for t in Terms(mp) do
     coef:=LeadingCoefficient(t);
     degX:=Degree(t,1);
     degY:=Degree(t,2);
-    tmp:=IntToWitt(coef,p,n+1 : primr:=primr);
+    tmp:=IntToWitt(coef,p,n : primr:=primr);
     tmp:=WittProd(tmp,vxs[degX+1] : vecP:=vecP);
     tmp:=WittProd(tmp,vys[degY+1] : vecP:=vecP);
     
