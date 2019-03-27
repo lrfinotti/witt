@@ -192,7 +192,8 @@ end function;
 function GT1(f : pols:=[], tab:=[], vvars:=[])
     // f must be given by f:=[ ... , [[a0,a1,...,an],i,j] , ... ]
     n:=#(f[1][1])-1; // length of the coefficients - 1
-    P:=Parent(f[1][1][1]);
+    //P:=Parent(f[1][1][1]);
+    P:=Universe(f[1][1]);
     p:=Characteristic(P);
 
     if #pols eq 0 then
@@ -413,7 +414,8 @@ end function;
 function GT2(f : bintab:=[], tab:=[], vvars:=[])
     // f must be given by f:=[ ... , [[a0,a1,...,an],i,j] , ... ]
     n:=#(f[1][1])-1; // length of the coefficients - 1
-    P:=Parent(f[1][1][1]);
+    //P:=Parent(f[1][1][1]);
+    P:=Universe(f[1][1]);
     p:=Characteristic(P);
 
     if #bintab eq 0 then
@@ -656,7 +658,8 @@ end function;
 function GT3(f : bintab:=[], tab:=[], vvars:=[])
     // f must be given by f:=[ ... , [[a0,a1,...,an],i,j] , ... ]
     n:=#(f[1][1])-1; // length of the coefficients - 1
-    P:=Parent(f[1][1][1]);
+    //P:=Parent(f[1][1][1]);
+    P:=Universe(f[1][1]);
     p:=Characteristic(P);
 
     if #bintab eq 0 then
@@ -784,7 +787,8 @@ end function;
 
 
 function WittPower1(v,k : pols:=pols)
-    p:=Characteristic(Parent(v[1]));
+    //p:=Characteristic(Parent(v[1]));
+    p:=Characteristic(Universe(v));
     F:=GF(p);
     l := #v;
     vone := [ F!1 ] cat [ F!0 : i in [2..l]];
@@ -794,7 +798,8 @@ end function;
 
 
 function WittPower2(v,k : bintab:=bintab)
-    p:=Characteristic(Parent(v[1]));
+    //p:=Characteristic(Parent(v[1]));
+    p:=Characteristic(Universe(v));
     F:=GF(p);
     l := #v;
     vone := [ F!1 ] cat [ F!0 : i in [2..l]];
@@ -803,7 +808,8 @@ function WittPower2(v,k : bintab:=bintab)
 end function;
 
 function WittPower3(v,k : bintab:=bintab)
-    p:=Characteristic(Parent(v[1]));
+    //p:=Characteristic(Parent(v[1]));
+    p:=Characteristic(Universe(v));
     F:=GF(p);
     l := #v;
     vone := [ F!1 ] cat [ F!0 : i in [2..l]];
@@ -815,7 +821,8 @@ end function;
 
 function WittPower(v,k : choice:=1, pols:=[], bintab:=[])
 
-    P := Parent(v[1]);
+    //P := Parent(v[1]);
+    P := Universe(v);
 
     // if over a finite field, perform in Zq
     if IsFinite(P) and IsField(P) then

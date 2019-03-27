@@ -12,7 +12,8 @@
 // convert a Witt vector over a finite field to p-adic power series
 function WittVToSeries(v : Zq:=0)
 
-    FF:=Parent(v[1]);
+    //FF:=Parent(v[1]);
+    FF:=Universe(v);
     p:=Characteristic(FF);
     n:=#v-1;
 
