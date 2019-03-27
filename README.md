@@ -1,19 +1,24 @@
-# Witt Vectors and Canonical Liftings
+# Witt Vectors and Canonical Liftings #
 
-This contains various routines to run on
-[MAGMA](http://magma.maths.usyd.edu.au/magma/) to perform computations
-with Witt vectors and canonical liftings.
+This contains various routines to perform computations with Witt
+ vectors and canonical liftings on
+ [MAGMA](http://magma.maths.usyd.edu.au/magma/).
 
-## Files
+**Note:** These routines do not have many checks for consistency
+of the input!  So it might output errors or, even worse, garbage, if
+the input is not consistent with what is expected it to be.
+
+
+## Files ##
 
 * `etas.m`: Contains the auxiliary "eta functions" for computations
   with Witt vectors.
 
 * `witt.m`: Contains functions to perform operations with Witt
-  vectors.  (Depends on `etas.m`.)
+  vectors, except for powers.  (Depends on `etas.m`.)
 
 * `gt.m`: Contains routines to compute the Greenberg transform of
-  polynomials in two variables, allowing in particular, to evaluate
+  polynomials in two variables, allowing in particular to evaluate
   these polynomials at a pair of Witt vectors.  It also contains
   functions to compute powers of Witt vectors.  (Depends on `witt.m`.)
 
@@ -21,11 +26,14 @@ with Witt vectors and canonical liftings.
   elliptic Teichmüller lift (up to 3 coordinates) and minimal degree
   liftings of ordinary elliptic curves.  (Depends on `gt.m`.)
 
-* `lift_j.m`: contains routines to find the coordinates of the
+* `lift_j.m`: Contains routines to find the coordinates of the
   j-invariant of the canonical lifting.  (Depends on `gt.m`.)
 
+* `test*.m`: These are test files and can be ignored.  (I leave them
+  for when I want to test changes.)
 
-## Theory
+
+## Theory ##
 
 The routines are based on the methods developed in [Computations with
 Witt Vectors and the Greenberg Transform][comp].  It provides more
@@ -53,9 +61,11 @@ j-Invariant of the Canonical Lifting][jinv].
 
 
 
-## Usage
+## Usage ##
 
-The "eta functions" (described in Section 5 of [Computations with Witt
+### Eta Polynomials ###
+
+The "eta polynomials" (described in Section 5 of [Computations with Witt
 Vectors and the Greenberg Transform][comp]) that are used in all
 computations can be computed in three different ways:
 
@@ -63,42 +73,92 @@ computations can be computed in three different ways:
    used them in the computations.
 
 2. Store some more basic data that take much less memory and compute
-   the eta functions "on the fly".  (This is describe in Section 8 of
+   the eta polynomials "on the fly".  (This is describe in Section 8 of
    [Computations with Witt Vectors and the Greenberg
    Transform][comp]).  This is usually slower, but requires less
-   memory.  In some cases, where the eta functions are too large, and
+   memory.  In some cases, where the eta polynomials are too large, and
    one does not need many computations, it might be actually faster
    than method 1.
    
 3. Use method 2, but store some values of resulting computations of
-   the eta function, so that we don't need to recompute them, which is
+   the eta polynomial, so that we don't need to recompute them, which is
    likely to happen with method 2.  Of course, it uses more memory
    than method 2, but likely less memory than method 1.
 
 
-### Basic Computations with Witt Vectors
+Most of the functions below, which involve computations with Witt
+vectors, use these eta polynomials, and therefore have options for the
+user to choose the method to be used.  The choice of method is done
+via an optional argument `choice`.  Setting, for instance, `choice:=2`
+tells the function to use the method 2 above.  The default choice (so
+no need to be specified) is method 1, which is probably the best
+choice "in average".
+
+As mentioned above, method 1 stores some shorter eta polynomials,
+while methods 2 and 3 store much smaller data, which are basically
+some binomials.  In principle the corresponding data, eta polynomials
+or binomials, is computed every time a function is called.  But it can
+also be computed separately, saved, and then given to functions via
+optional arguments.  An optional argument `pols` gives the eta
+polynomials to be used in method 1, while the optional argument
+`bintab` gives the "binomial table" that is used in methods 2 and 3.
+(This will be clearer with the examples in the sections below.)
+
+To compute the eta polynomials necessary for computations with Witt
+vectors of length `n+1` in characteristic `p` we call `etapols(p,n)`.
+To compute the table of binomials we call `BinTab(p,n)`.
+```
+> etapols(2,4);
+[
+    x*y,
+    x^3*y + x*y^3,
+    x^7*y + x^5*y^3 + x^3*y^5 + x*y^7,
+    x^15*y + x^13*y^3 + x^12*y^4 + x^11*y^5 + x^10*y^6 + x^9*y^7 + x^7*y^9 + x^6*y^10 + x^5*y^11 + x^4*y^12 + x^3*y^13 + x*y^15
+]
+
+> BinTab(3,4);
+[
+    [ 2, 2 ],
+    [ 2, 2, 0, 1, 1, 0, 2, 2 ],
+    [ 2, 2, 0, 1, 1, 2, 2, 2, 0, 1, 1, 1, 2, 2, 1, 1, 1, 0, 2, 2, 2, 1, 1, 0, 2, 2 ],
+    [ 2, 2, 0, 1, 1, 2, 2, 2, 0, 1, 1, 2, 2, 2, 2, 1, 1, 0, 2, 2, 2, 1, 1, 0, 2, 2, 2, 1, 1, 2, 2, 2, 0, 1, 1, 1, 2, 2, 2, 1, 1, 2, 
+    2, 2, 1, 1, 1, 0, 2, 2, 2, 1, 1, 2, 2, 2, 0, 1, 1, 2, 2, 2, 0, 1, 1, 2, 2, 2, 2, 1, 1, 0, 2, 2, 2, 1, 1, 0, 2, 2 ]
+
+```
+
+**Important:** As you can see above, the argument that is passed for
+length `n+1` is actually `n`.  This is because we often see vectors of
+length `n+1` as `[a0,a1,...,an]`, so `n` corresponds to the last
+coordinate (when counting from 0.)  *We use this convention through
+out!*
+
+
+### Basic Computations with Witt Vectors ###
+
+
 
 The following functions are provided in `witt.m`:
 
 * `WittSum`: adds two Witt vectors.
 * `WittProd`: multiplies two Witt vectors.
-* `WittNeg`: gives the additive inverse of a Witt vector.
+* `WittNeg`: gives the additive inverse (i.e., negative) of a Witt
+  vector.
 * `WittInv`: gives the multiplicative inverse of a Witt vector (if
   exists).
   
 The file `gt.m` also provides `WittPower` to compute powers of Witt
 vectors.
   
-Each of these functions have an optional argument `choice` that allows
-you to choose which method (1, 2 or 3, as above) to use in the
-computations.  It defaults to method 1, which seems to be usually the
-fastest one.
+As explained above, each of these functions have an optional argument
+`choice` that allows you to choose which method (1, 2 or 3, as above)
+to use in the computations, and it defaults to method 1.
 
 **Note:** If any of the above functions are called to compute with
 Witt vectors over finite fields, then the operations are performed by
-converting to unramified extensions of p-adic integers, performing the
-operation in that ring, and then converting back to Witt vectors.
-This method is *a lot* more efficient than any of the methods above!
+converting them to elements of unramified extensions of p-adic
+integers, performing the operation in that ring, and then converting
+back to Witt vectors.  This method is *a lot* more efficient than any
+of the methods above!
   
 Here is one simple example:
 ```
@@ -149,7 +209,7 @@ Loading "etas.m"
 ]
 
 ```
-Note that we cannot invert `v` or `w` since they are not units.
+Note that we cannot invert `v` (or `w`) since they are not units.
 ```
 > WittInv(v);
 
@@ -174,20 +234,17 @@ But:
 ]
 ```
 
-Every time these functions are called, the eta polynomials are
-computed, wasting time.  If one needs to make many computations for
-longer length or large characteristic, it is better to save these and
-reuse them.  For example, continuing the example above, we could save
-the eta polynomials (for prime `p`, defined to be 5 in the example, and
-length 3) with: 
+As explained above, every time these functions are called, the eta
+polynomials are computed, wasting time.  If one needs to make many
+computations for longer length or large characteristic, it is better
+to save these and reuse them.  For example, continuing the example
+above, we could save the eta polynomials (for prime `p`, defined to be
+5 in the example, and length 3) with:
 ```
 epols:=etapols(p,2);
 ```
-(Note that we use `2` as the second argument to give length of 3.
-This is because we often see vectors of length `n+1` as
-`[a0,a1,...,an]`, so `n` corresponds to the last coordinate (when
-counting from 0.)  We use this convention through out.)
-Then, when we need to compute with Witt vectors of length 3 with
+(Note again that we use `2` as the second argument to give length of
+3.)  Then, when we need to compute with Witt vectors of length 3 with
 entries in characteristic `p`, we can pass these polynomials as an
 optional argument `pols`.  The routines then use those, instead of
 computing them each time:
@@ -295,16 +352,15 @@ characteristics, these alone can take some time.
 
 The file `etas.m` also provide a few basic functions.
 
-* `IntToWitt` converts an integer to a Witt vector of a given length
-  an entries in a specified prime field.
+* `IntToWitt`: Converts an integer to a Witt vector of a given length
+  and entries in a specified prime field.
 
-* `WittVToSeries` converts a Witt vector over a finite field to a
+* `WittVToSeries`: Converts a Witt vector over a finite field to a
   p-adic (truncated) power series in an unramified extension of the
   p-adic integers.
 
-* `SeriesToWittV` converts a a
-  p-adic (truncated) power series in an unramified extension of the
-  p-adic integers to a Witt vector.
+* `SeriesToWittV`: Converts a p-adic (truncated) power series in an
+  unramified extension of the p-adic integers to a Witt vector.
 
 
 Here are some examples.
@@ -320,9 +376,6 @@ with 5 elements.
 Converting from Witt vector to power series:
 ```
 > F<a> := GF(5^3);
-> WittVToSeries([a,F!2,a^7,a^100]);
--190*aa^2 - 219*aa - 305 + O(5^4)
-
 > s := WittVToSeries([a,F!2,a^7,a^100]); s;
 -190*aa^2 - 219*aa - 305 + O(5^4)
 
@@ -360,7 +413,7 @@ a
 
 The file `gt.m` provides the following functions:
 
-* `GT`: computes the Greenberg transform of polynomials (over Witt
+* `GT`: Computes the Greenberg transform of polynomials (over Witt
   vectors) in two variables.  In particular, it provides an efficient
   way to evaluate such polynomials.
 
@@ -415,7 +468,7 @@ Here are some examples:
 ```
 
 As with the other functions, you can specify the method for the
-computations with the optional argument `choice`.  For the method 1
+computations with the optional argument `choice`.  For method 1
 (the default), again as above, you can use the optional argument
 `pols` to give the function precomputed eta polynomials.  For methods
 2 or 3, you can use the optional argument `bintab` to pass along the
@@ -536,3 +589,257 @@ above:
     0, 3
 *] ]
 ```
+
+### Canonical and Minimal Degree Liftings
+
+
+The file `lift.m` has routines to compute the canonical and minimal
+degree liftings of ordinary elliptic curves, along with their
+corresponding lifting of points: the elliptic Teichmüller and minimal
+degree respectively.  The curves are given by their Weierstrass
+coefficients.
+
+The canonical liftings can be computed up to length 3, while minimal
+degree liftings can have any length.
+
+The output is four vectors, say, `va`, `vb`, `vF`, and `vH`.  `va` and
+`vb` are the Weierstrass coefficients of the canonical lifting, while
+the Teichmüller/minimal degree lift is given by `(vF, y0*vH)`.  (See
+[Weierstrass Coefficients of the Canonical Lifting][wcoef] for more
+information, including the description of the algorithm.)
+
+[wcoef]: http://www.math.utk.edu/~finotti/papers/wcoef.pdf
+
+For example, to find some generic formulas for the canonical lifting
+of `y0^2 = x0^3 + a0*x0 + b0` in characteristic 5 for length 2:
+```
+> load 'lift.m';
+Loading "lift.m"
+Loading "gt.m"
+Loading "witt.m"
+Loading "etas.m"
+
+> p:=5; F<a0,b0>:=RationalFunctionField(GF(p),2);
+> lift(a0,b0,1);
+[
+    a0,
+    (a0^3*b0^2 + b0^4)/a0
+]
+[
+    b0,
+    4*a0^6*b0 + a0^3*b0^3 + b0^5
+]
+[
+    x0,
+    4/a0*x0^7 + 4*b0/a0*x0^4 + a0*x0^3 + 3*b0*x0^2 + 3*b0^2/a0*x0 + a0*b0
+]
+[
+    1,
+    1/a0*x0^8 + 2*x0^6 + 3*b0/a0*x0^5 + 2*a0*x0^4 + 3*b0*x0^3 + a0^2*x0^2 + 3*a0*b0*x0 + 3*a0^3 + 3*b0^2
+]
+>
+```
+
+For minimal degree, we set the optional argument `minimal:=true`.
+```
+> lift(a0,b0,2 : minimal:=true);
+[
+    a0,
+    (a0^3*b0^2 + b0^4)/a0,
+    (4*a0^36 + a0^33*b0^2 + a0^30*b0^4 + 3*a0^27*b0^6 + 2*a0^24*b0^8 + a0^18*b0^12 + 4*a0^12*b0^16 + 3*a0^9*b0^18 + 4*a0^6*b0^20 + 
+        4*a0^3*b0^22 + 4*b0^24)/a0^11
+]
+[
+    b0,
+    4*a0^6*b0 + a0^3*b0^3 + b0^5,
+    a0^36*b0 + 4*a0^33*b0^3 + 3*a0^27*b0^7 + 4*a0^21*b0^11 + 4*a0^15*b0^15 + a0^12*b0^17 + 3*a0^6*b0^21 + 4*b0^25
+]
+[
+    x0,
+    4/a0*x0^7 + 4*b0/a0*x0^4 + a0*x0^3 + 3*b0*x0^2 + 3*b0^2/a0*x0 + a0*b0,
+    2/a0^6*x0^37 + (a0^3*b0^2 + b0^4)/a0^11*x0^35 + 2*b0/a0^6*x0^34 + 3/a0^4*x0^33 + (4*a0^3 + 4*b0^2)/a0^6*x0^31 + 
+        3*b0^5/a0^10*x0^30 + 4*b0^2/a0^5*x0^29 + (a0^3 + 3*b0^2)/a0^4*x0^27 + 2*b0/a0^2*x0^26 + (4*a0^3*b0 + 3*b0^3)/a0^4*x0^24 + 
+        (4*a0^6 + 3*a0^3*b0^2 + b0^4)/a0^5*x0^23 + (2*a0^3*b0^3 + 4*b0^5)/a0^6*x0^22 + (a0^3*b0^2 + b0^4)/a0^4*x0^21 + (2*a0^12*b0 + 
+        4*a0^9*b0^3 + a0^3*b0^7 + b0^9)/a0^11*x0^20 + (a0^9 + 3*a0^6*b0^2 + 4*b0^6)/a0^6*x0^19 + (2*a0^6*b0 + a0^3*b0^3 + 
+        4*b0^5)/a0^4*x0^18 + (2*a0^6 + a0^3*b0^2 + b0^4)/a0^2*x0^17 + (3*a0^6*b0^3 + 4*a0^3*b0^5 + 3*b0^7)/a0^6*x0^16 + (2*a0^15 + 
+        4*a0^12*b0^2 + 3*a0^6*b0^6 + 4*b0^10)/a0^10*x0^15 + (4*a0^6*b0 + 2*b0^5)/a0^2*x0^14 + (3*a0^9 + 4*a0^6*b0^2 + 3*a0^3*b0^4 + 
+        2*b0^6)/a0^3*x0^13 + (3*a0^9*b0 + 2*a0^6*b0^3 + a0^3*b0^5 + 2*b0^7)/a0^4*x0^12 + (2*a0^9*b0^2 + 3*a0^6*b0^4 + 4*a0^3*b0^6 + 
+        2*b0^8)/a0^5*x0^11 + (2*a0^6*b0^3 + 3*a0^3*b0^5 + 3*b0^7)/a0^3*x0^10 + (3*a0^9*b0^2 + 2*a0^6*b0^4 + 4*a0^3*b0^6 + 
+        4*b0^8)/a0^4*x0^9 + (2*a0^9*b0^3 + 2*a0^6*b0^5 + 4*a0^3*b0^7 + b0^9)/a0^5*x0^8 + (3*a0^9*b0^4 + 3*a0^6*b0^6 + a0^3*b0^8 + 
+        2*b0^10)/a0^6*x0^7 + (3*a0^9*b0^3 + 3*a0^3*b0^7 + 2*b0^9)/a0^4*x0^6 + (4*a0^21 + 3*a0^15*b0^4 + a0^12*b0^6 + 2*a0^9*b0^8 + 
+        2*a0^3*b0^12 + 2*b0^14)/a0^11*x0^5 + (a0^9*b0^5 + 3*a0^6*b0^7 + 4*a0^3*b0^9 + 2*b0^11)/a0^6*x0^4 + (4*a0^9*b0^4 + 4*a0^6*b0^6
+        + a0^3*b0^8 + 3*b0^10)/a0^4*x0^3 + (2*a0^9*b0^5 + 2*a0^6*b0^7 + 4*b0^11)/a0^5*x0^2 + (2*a0^9*b0^6 + 4*b0^12)/a0^6*x0 + 
+        (4*a0^21*b0 + a0^18*b0^3 + 4*a0^15*b0^5 + a0^12*b0^7 + a0^9*b0^9 + 3*a0^6*b0^11 + b0^15)/a0^10
+]
+[
+    1,
+    1/a0*x0^8 + 2*x0^6 + 3*b0/a0*x0^5 + 2*a0*x0^4 + 3*b0*x0^3 + a0^2*x0^2 + 3*a0*b0*x0 + 3*a0^3 + 3*b0^2,
+    1/a0^10*x0^56 + 2/a0^9*x0^54 + 2*b0/a0^10*x0^53 + 1/a0^8*x0^52 + 2*b0/a0^9*x0^51 + b0^2/a0^10*x0^50 + 3/a0^6*x0^48 + (4*a0^3*b0^2
+        + 4*b0^4)/a0^11*x0^46 + 4*b0/a0^6*x0^45 + (3*a0^6 + 3*a0^3*b0^2 + 3*b0^4)/a0^10*x0^44 + (3*a0^3*b0^3 + 3*b0^5)/a0^11*x0^43 + 
+        (2*a0^6 + 4*a0^3*b0^2 + 4*b0^4)/a0^9*x0^42 + (3*a0^6*b0 + 3*a0^3*b0^3 + 4*b0^5)/a0^10*x0^41 + (a0^9 + 3*a0^6*b0^2 + 
+        4*a0^3*b0^4 + 4*b0^6)/a0^11*x0^40 + (2*a0^6*b0 + 2*b0^5)/a0^9*x0^39 + (2*a0^9 + a0^6*b0^2 + 2*b0^6)/a0^10*x0^38 + (2*a0^6*b0 
+        + 4*a0^3*b0^3 + b0^5)/a0^8*x0^37 + (4*a0^9 + a0^6*b0^2 + 4*a0^3*b0^4 + 2*b0^6)/a0^9*x0^36 + (4*a0^6*b0^3 + b0^7)/a0^10*x0^35 
+        + (3*a0^6 + 3*b0^4)/a0^5*x0^34 + (3*a0^6*b0 + 4*a0^3*b0^3 + 3*b0^5)/a0^6*x0^33 + (a0^6 + 2*b0^4)/a0^4*x0^32 + (4*a0^12*b0 + 
+        a0^9*b0^3 + 3*a0^6*b0^5 + 2*a0^3*b0^7 + 2*b0^9)/a0^11*x0^31 + (4*a0^9 + 4*a0^6*b0^2 + 4*b0^6)/a0^6*x0^30 + (2*a0^12*b0 + 
+        2*a0^9*b0^3 + 3*a0^6*b0^5 + 4*a0^3*b0^7 + 4*b0^9)/a0^10*x0^29 + (2*a0^12*b0^2 + a0^9*b0^4 + 4*a0^6*b0^6 + 4*a0^3*b0^8 + 
+        4*b0^10)/a0^11*x0^28 + (4*a0^12*b0 + a0^9*b0^3 + 4*a0^6*b0^5 + 2*a0^3*b0^7 + 2*b0^9)/a0^9*x0^27 + (2*a0^15 + 2*a0^12*b0^2 + 
+        4*a0^3*b0^8 + 4*b0^10)/a0^10*x0^26 + (4*a0^15*b0 + a0^12*b0^3 + 2*a0^9*b0^5 + 2*a0^6*b0^7 + 2*a0^3*b0^9 + 
+        2*b0^11)/a0^11*x0^25 + (4*a0^3*b0^2 + 2*b0^4)*x0^24 + (4*a0^9*b0 + 3*a0^6*b0^3 + 2*b0^7)/a0^4*x0^23 + (a0^9 + 3*a0^6*b0^2 + 
+        4*a0^3*b0^4 + 2*b0^6)/a0^2*x0^22 + (3*a0^9*b0 + 3*a0^3*b0^5 + b0^7)/a0^3*x0^21 + (a0^9*b0^2 + 4*a0^3*b0^6 + 
+        2*b0^8)/a0^4*x0^20 + (4*a0^7*b0 + a0^4*b0^3 + a0*b0^5)*x0^19 + (3*a0^6*b0^2 + 3*a0^3*b0^4 + 3*b0^6)*x0^18 + (3*a0^9*b0 + 
+        4*a0^6*b0^3 + a0^3*b0^5 + 3*b0^7)/a0*x0^17 + (4*a0^15 + 3*a0^12*b0^2 + a0^6*b0^6 + 2*b0^10)/a0^5*x0^16 + (a0^12*b0 + 
+        2*a0^9*b0^3 + 4*a0^6*b0^5 + 2*a0^3*b0^7 + 4*b0^9)/a0^3*x0^15 + (2*a0^15 + a0^9*b0^4 + 2*a0^3*b0^8 + 4*b0^10)/a0^4*x0^14 + 
+        (3*a0^12*b0^3 + 3*a0^9*b0^5 + a0^6*b0^7 + a0^3*b0^9 + 4*b0^11)/a0^5*x0^13 + (3*a0^15 + 4*a0^9*b0^4 + 2*a0^6*b0^6 + 
+        2*a0^3*b0^8 + 2*b0^10)/a0^3*x0^12 + (3*a0^21*b0 + 2*a0^18*b0^3 + 4*a0^15*b0^5 + a0^12*b0^7 + a0^9*b0^9 + 4*a0^6*b0^11 + 
+        4*b0^15)/a0^10*x0^11 + (a0^18 + 3*a0^15*b0^2 + 3*a0^9*b0^6 + 2*a0^6*b0^8 + 4*a0^3*b0^10 + 2*b0^12)/a0^5*x0^10 + (a0^21*b0 + 
+        4*a0^18*b0^3 + a0^15*b0^5 + 4*a0^12*b0^7 + 4*a0^9*b0^9 + 3*b0^15)/a0^9*x0^9 + (4*a0^24 + a0^21*b0^2 + 2*a0^18*b0^4 + 
+        2*a0^15*b0^6 + 4*a0^12*b0^8 + a0^9*b0^10 + 3*b0^16)/a0^10*x0^8 + (a0^21*b0 + a0^18*b0^3 + 4*a0^15*b0^5 + 3*a0^12*b0^7 + 
+        2*a0^9*b0^9 + 4*b0^15)/a0^8*x0^7 + (3*a0^24 + 2*a0^21*b0^2 + 3*a0^18*b0^4 + 4*a0^15*b0^6 + 4*a0^12*b0^8 + 2*a0^9*b0^10 + 
+        3*b0^16)/a0^9*x0^6 + (2*a0^24*b0 + 2*a0^21*b0^3 + a0^18*b0^5 + 2*a0^15*b0^7 + 2*a0^9*b0^11 + 4*b0^17)/a0^10*x0^5 + 
+        (a0^13*b0^2 + 4*a0^4*b0^8 + 2*a0*b0^10)*x0^4 + (4*a0^15*b0 + 3*a0^12*b0^3 + 4*a0^6*b0^7 + 2*a0^3*b0^9 + 4*b0^11)*x0^3 + 
+        (3*a0^17 + 4*a0^14*b0^2 + 4*a0^11*b0^4 + a0^8*b0^6 + 4*a0^5*b0^8 + a0^2*b0^10)*x0^2 + (4*a0^16*b0 + 4*a0^13*b0^3 + 
+        4*a0^10*b0^5 + 4*a0^7*b0^7 + 3*a0^4*b0^9 + 4*a0*b0^11)*x0 + 4*a0^18 + 4*a0^15*b0^2 + a0^12*b0^4 + 3*a0^9*b0^6 + a0^6*b0^8 + 
+        2*b0^12
+]
+```
+(Note that for length 2 the minimal and canonical liftings coincide.)
+
+If also allows us to pass the eta polynomials to be used in the
+computations using the optional argument `pols` as with the functions
+above.
+
+For minimal degree liftings, we can get higher lengths:
+```
+> epols:=etapols(5,3);
+
+> lift(GF(5)!1,GF(5)!2,3 : minimal:=true, pols:=epols);
+[ 1, 0, 4, 0 ]
+[ 2, 3, 3, 0 ]
+[
+    x0,
+    4*x0^7 + 3*x0^4 + x0^3 + x0^2 + 2*x0 + 2,
+    2*x0^37 + 4*x0^34 + 3*x0^33 + x0^30 + x0^29 + 3*x0^27 + 4*x0^26 + 2*x0^24 + 2*x0^23 + 4*x0^22 + x0^20 + 4*x0^19 + 2*x0^17 + x0^16
+        + x0^15 + 2*x0^14 + 4*x0^11 + x0^10 + 4*x0^9 + 4*x0^8 + 4*x0^7 + 2*x0^6 + 3*x0^5 + 3*x0^3 + 2*x0^2 + 2*x0 + 1,
+    x0^187 + 3*x0^185 + 2*x0^184 + 4*x0^183 + 3*x0^180 + 4*x0^179 + 2*x0^177 + 3*x0^176 + x0^175 + 2*x0^174 + 4*x0^173 + 3*x0^172 + 
+        4*x0^171 + 3*x0^170 + 2*x0^169 + 3*x0^167 + x0^166 + 2*x0^165 + 2*x0^164 + 3*x0^163 + 2*x0^162 + x0^161 + 3*x0^159 + x0^158 +
+        2*x0^156 + 3*x0^155 + 2*x0^154 + 2*x0^153 + 2*x0^152 + 3*x0^149 + 4*x0^147 + 3*x0^143 + x0^142 + 2*x0^141 + 4*x0^139 + 
+        4*x0^137 + x0^136 + 3*x0^134 + 2*x0^133 + 3*x0^132 + 4*x0^131 + 2*x0^130 + 4*x0^129 + 2*x0^128 + 2*x0^126 + 2*x0^123 + 
+        4*x0^122 + 4*x0^121 + x0^119 + x0^118 + 4*x0^117 + 4*x0^116 + 3*x0^115 + 3*x0^113 + 2*x0^112 + 3*x0^111 + 3*x0^110 + 3*x0^109
+        + x0^108 + 2*x0^106 + 3*x0^105 + 3*x0^104 + 2*x0^103 + 4*x0^102 + 3*x0^101 + 3*x0^100 + 2*x0^99 + x0^98 + 3*x0^97 + 2*x0^96 +
+        3*x0^95 + 4*x0^94 + 3*x0^93 + 3*x0^92 + x0^91 + 3*x0^90 + x0^88 + 3*x0^87 + 4*x0^85 + x0^84 + x0^83 + x0^81 + x0^80 + 2*x0^79
+        + 3*x0^78 + 4*x0^77 + x0^76 + 3*x0^74 + x0^73 + 2*x0^72 + 3*x0^71 + x0^69 + 2*x0^68 + x0^67 + x0^65 + 3*x0^64 + 4*x0^63 + 
+        x0^62 + 4*x0^61 + 4*x0^60 + 3*x0^59 + x0^58 + 3*x0^57 + 2*x0^56 + x0^55 + 4*x0^54 + x0^53 + 3*x0^52 + 4*x0^51 + 4*x0^50 + 
+        3*x0^49 + x0^48 + 2*x0^47 + 4*x0^46 + x0^45 + 3*x0^43 + 3*x0^42 + 4*x0^41 + x0^39 + 4*x0^38 + x0^37 + 2*x0^36 + 4*x0^35 + 
+        3*x0^33 + 4*x0^31 + x0^30 + 3*x0^28 + 4*x0^27 + 2*x0^26 + 4*x0^24 + 2*x0^23 + 3*x0^22 + 2*x0^21 + 2*x0^20 + x0^19 + 2*x0^18 +
+        4*x0^16 + 4*x0^14 + 3*x0^13 + 2*x0^11 + 3*x0^9 + 4*x0^7 + 2*x0^5 + 4*x0^2 + 4*x0 + 3
+]
+[
+    1,
+    x0^8 + 2*x0^6 + x0^5 + 2*x0^4 + x0^3 + x0^2 + x0,
+    x0^56 + 2*x0^54 + 4*x0^53 + x0^52 + 4*x0^51 + 4*x0^50 + 3*x0^48 + 3*x0^45 + 3*x0^44 + 2*x0^42 + 3*x0^41 + 3*x0^40 + 3*x0^39 + 
+        4*x0^38 + 3*x0^37 + x0^34 + 4*x0^33 + 3*x0^32 + 2*x0^31 + x0^30 + x0^29 + 4*x0^27 + x0^25 + 3*x0^24 + 3*x0^23 + 2*x0^20 + 
+        3*x0^19 + 2*x0^18 + 4*x0^17 + 3*x0^16 + x0^14 + 2*x0^13 + 4*x0^11 + 4*x0^8 + 3*x0^7 + 2*x0^5 + x0^4 + 3*x0 + 1,
+    x0^336 + 2*x0^334 + 4*x0^333 + x0^332 + 4*x0^331 + 4*x0^330 + 2*x0^326 + 4*x0^324 + 3*x0^323 + 2*x0^322 + 2*x0^321 + 3*x0^320 + 
+        3*x0^319 + x0^318 + 4*x0^317 + 2*x0^316 + x0^315 + 2*x0^314 + 4*x0^313 + x0^312 + 3*x0^311 + 4*x0^310 + 3*x0^309 + x0^308 + 
+        4*x0^307 + x0^305 + 3*x0^304 + x0^303 + 4*x0^302 + x0^301 + x0^300 + x0^296 + 2*x0^294 + 4*x0^293 + x0^292 + 4*x0^291 + 
+        4*x0^290 + 2*x0^286 + 4*x0^284 + 3*x0^283 + 2*x0^282 + 4*x0^281 + 3*x0^280 + 2*x0^279 + x0^278 + x0^277 + x0^276 + x0^275 + 
+        x0^274 + 3*x0^273 + x0^271 + 2*x0^270 + 4*x0^269 + 4*x0^267 + 4*x0^265 + 4*x0^263 + 4*x0^262 + 3*x0^261 + x0^260 + 4*x0^259 +
+        3*x0^258 + x0^257 + 3*x0^255 + 2*x0^254 + 4*x0^253 + x0^252 + 2*x0^251 + x0^250 + 3*x0^249 + 3*x0^248 + x0^247 + 4*x0^246 + 
+        x0^245 + 3*x0^244 + x0^242 + 4*x0^241 + x0^240 + x0^239 + 4*x0^238 + x0^237 + 4*x0^236 + 2*x0^234 + 3*x0^233 + 4*x0^229 + 
+        2*x0^228 + 4*x0^227 + x0^226 + 4*x0^224 + 2*x0^223 + 3*x0^222 + 2*x0^221 + x0^220 + x0^219 + x0^217 + x0^216 + 3*x0^215 + 
+        x0^214 + x0^213 + 3*x0^212 + 3*x0^211 + 4*x0^210 + 4*x0^208 + 3*x0^207 + 4*x0^206 + 3*x0^205 + 3*x0^204 + 4*x0^203 + 4*x0^202
+        + 2*x0^201 + 2*x0^199 + 2*x0^198 + x0^196 + 4*x0^195 + x0^194 + 3*x0^193 + 4*x0^192 + 3*x0^191 + 4*x0^190 + x0^188 + 4*x0^187
+        + 4*x0^186 + 2*x0^185 + 3*x0^184 + 2*x0^182 + 4*x0^181 + 2*x0^180 + x0^178 + 2*x0^177 + 4*x0^176 + x0^175 + 3*x0^174 + 
+        4*x0^173 + 2*x0^172 + 3*x0^170 + 3*x0^169 + 4*x0^168 + x0^166 + 2*x0^165 + 3*x0^164 + x0^163 + 3*x0^162 + 4*x0^161 + 2*x0^159
+        + x0^158 + x0^157 + 2*x0^156 + 2*x0^154 + 4*x0^152 + 2*x0^151 + 4*x0^150 + x0^149 + 4*x0^148 + 3*x0^146 + x0^145 + 3*x0^144 +
+        x0^142 + 2*x0^141 + 3*x0^140 + 4*x0^139 + 2*x0^138 + 2*x0^137 + 4*x0^136 + 4*x0^135 + x0^134 + 3*x0^133 + x0^131 + x0^129 + 
+        x0^128 + 2*x0^126 + x0^125 + x0^124 + 2*x0^123 + 4*x0^122 + 2*x0^121 + 3*x0^120 + 3*x0^119 + 3*x0^118 + x0^117 + 3*x0^116 + 
+        2*x0^114 + 4*x0^113 + 3*x0^111 + 3*x0^110 + 3*x0^109 + 4*x0^108 + x0^107 + 4*x0^106 + 2*x0^104 + 3*x0^103 + x0^101 + 3*x0^100
+        + 4*x0^99 + 3*x0^98 + 4*x0^97 + 4*x0^95 + 3*x0^94 + 2*x0^93 + 2*x0^92 + 2*x0^91 + 3*x0^90 + 4*x0^89 + 4*x0^88 + x0^87 + x0^86
+        + 3*x0^85 + 2*x0^84 + x0^82 + 4*x0^81 + 2*x0^80 + 3*x0^78 + 4*x0^75 + 3*x0^74 + x0^73 + 4*x0^72 + 2*x0^70 + x0^69 + 4*x0^68 +
+        3*x0^66 + 3*x0^64 + 2*x0^63 + 3*x0^62 + x0^61 + x0^59 + 4*x0^58 + 4*x0^57 + x0^56 + 3*x0^55 + x0^54 + x0^53 + 3*x0^52 + 
+        3*x0^51 + 2*x0^50 + 3*x0^49 + 4*x0^48 + 2*x0^47 + 4*x0^46 + x0^44 + 4*x0^43 + x0^42 + 3*x0^40 + 2*x0^39 + 3*x0^38 + x0^37 + 
+        3*x0^36 + 3*x0^35 + 3*x0^34 + x0^33 + 4*x0^32 + 3*x0^31 + 4*x0^29 + 4*x0^28 + x0^27 + x0^26 + 4*x0^24 + 2*x0^22 + 4*x0^19 + 
+        x0^18 + 4*x0^17 + 2*x0^16 + 2*x0^14 + 3*x0^13 + 4*x0^11 + 4*x0^10 + 3*x0^9 + 4*x0^8 + 2*x0^7 + x0^5 + x0^3 + 4*x0^2 + 4*x0
+]
+```
+
+### Lifting the j-Invariant
+
+The file `lift_j.m` has routines to compute the formulas for the
+j-invariant of the canonical lifting as described in [Coordinates of the
+j-Invariant of the Canonical Lifting][jinv].
+
+To find the formulas in characteristic 5 for length 4:
+```
+> lift_j(5,3);
+[
+    j0,
+    j0^4 + 3*j0^3,
+    j0^24 + 3*j0^23 + j0^20 + j0^19 + 4*j0^18 + j0^17 + 4*j0^16 + 4*j0^15 + 4*j0^14 + 2*j0^13 + 2*j0^10 + 3*j0^5,
+    (j0^149 + 3*j0^148 + j0^145 + j0^144 + 4*j0^143 + j0^142 + 3*j0^141 + 3*j0^140 + 4*j0^139 + j0^138 + 2*j0^137 + 4*j0^136 + j0^135
+        + 2*j0^134 + j0^133 + j0^132 + 4*j0^130 + j0^129 + 4*j0^128 + 3*j0^126 + 3*j0^125 + 2*j0^123 + 2*j0^122 + j0^120 + 3*j0^119 +
+        3*j0^118 + 4*j0^117 + j0^116 + 3*j0^114 + 2*j0^113 + 2*j0^112 + 3*j0^111 + j0^110 + 4*j0^109 + 3*j0^107 + 2*j0^106 + 4*j0^104
+        + 4*j0^103 + 3*j0^102 + 4*j0^100 + 4*j0^99 + 3*j0^98 + j0^97 + j0^95 + 2*j0^94 + 2*j0^93 + 3*j0^92 + 4*j0^91 + 4*j0^90 + 
+        3*j0^89 + 2*j0^88 + 2*j0^87 + j0^85 + 3*j0^84 + 2*j0^83 + 3*j0^82 + 3*j0^80 + 2*j0^79 + j0^78 + 3*j0^77 + j0^76 + 3*j0^75 + 
+        2*j0^73 + j0^72 + 3*j0^70 + 2*j0^69 + 3*j0^68 + 3*j0^65 + 4*j0^63 + 4*j0^62 + j0^61 + j0^59 + 3*j0^58 + 3*j0^55 + 4*j0^50 + 
+        3*j0^45 + 4*j0^40 + j0^25 + 1)/j0^25
+]
+```
+
+As it uses `GT`, you can again make a choice of method used with the
+optional argument `choice` and pass along eta polynomials with `pols`
+and binomials with `bintab`.
+```
+> bt:=BinTab(2,5);
+> lift_j(2,5 : choice:=2, bintab:=bt);
+[
+    j0,
+    0,
+    0,
+    0,
+    j0^8,
+    j0^24 + j0^16
+]
+```
+
+One can also compute the j-invariant of the canonical lifting of
+curves over finite fields, instead of the general the formulas above,
+using `lift_j0`.  In this case, note it is necessary that the
+j-invariant given, say `j0`, is not in `GF(p^2)`.  (In particular,
+this guarantees that the elliptic curve is not supersingular!)
+
+```
+> p:=7; d:=5; F<a>:=GF(p^d);
+> j0 := Random(F);
+> (j0^(p^2) - j0) eq F!0;
+false
+
+> lift_j0(j0,4);
+[ a^4843, a^1676, a^6953, a^597, a^9271 ]
+```
+
+
+Using information from [Coordinates of the j-Invariant of the
+Canonical Lifting][jinv], we can also compute the formulas by
+interpolation (using `lift_j0` sufficiently many times) with
+`lift_j_int`.  This is generally much slower than `lift_j`, but it
+uses *a lot* less memory.  Also, note that `lift_j_int` is only
+implemented for characteristic 5 or more, which `lift_j` works for any
+characteristic.
+```
+> lift_j_int(5,3);
+[
+    j0,
+    j0^4 + 3*j0^3,
+    j0^24 + 3*j0^23 + j0^20 + j0^19 + 4*j0^18 + j0^17 + 4*j0^16 + 4*j0^15 + 4*j0^14 + 2*j0^13 + 2*j0^10 + 3*j0^5,
+    (j0^149 + 3*j0^148 + j0^145 + j0^144 + 4*j0^143 + j0^142 + 3*j0^141 + 3*j0^140 + 4*j0^139 + j0^138 + 2*j0^137 + 4*j0^136 + j0^135
+        + 2*j0^134 + j0^133 + j0^132 + 4*j0^130 + j0^129 + 4*j0^128 + 3*j0^126 + 3*j0^125 + 2*j0^123 + 2*j0^122 + j0^120 + 3*j0^119 +
+        3*j0^118 + 4*j0^117 + j0^116 + 3*j0^114 + 2*j0^113 + 2*j0^112 + 3*j0^111 + j0^110 + 4*j0^109 + 3*j0^107 + 2*j0^106 + 4*j0^104
+        + 4*j0^103 + 3*j0^102 + 4*j0^100 + 4*j0^99 + 3*j0^98 + j0^97 + j0^95 + 2*j0^94 + 2*j0^93 + 3*j0^92 + 4*j0^91 + 4*j0^90 + 
+        3*j0^89 + 2*j0^88 + 2*j0^87 + j0^85 + 3*j0^84 + 2*j0^83 + 3*j0^82 + 3*j0^80 + 2*j0^79 + j0^78 + 3*j0^77 + j0^76 + 3*j0^75 + 
+        2*j0^73 + j0^72 + 3*j0^70 + 2*j0^69 + 3*j0^68 + 3*j0^65 + 4*j0^63 + 4*j0^62 + j0^61 + j0^59 + 3*j0^58 + 3*j0^55 + 4*j0^50 + 
+        3*j0^45 + 4*j0^40 + j0^25 + 1)/j0^25
+]
+```
+
