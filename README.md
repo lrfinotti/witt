@@ -8,15 +8,19 @@ with Witt vectors and canonical liftings.
 
 * `etas.m`: Contains the auxiliary "eta functions" for computations
   with Witt vectors.
+
 * `witt.m`: Contains functions to perform operations with Witt
   vectors.  (Depends on `etas.m`.)
+
 * `gt.m`: Contains routines to compute the Greenberg transform of
   polynomials in two variables, allowing in particular, to evaluate
   these polynomials at a pair of Witt vectors.  It also contains
   functions to compute powers of Witt vectors.  (Depends on `witt.m`.)
+
 * `lift.m`: Contains routines to compute canonical liftings and the
   elliptic Teichmüller lift (up to 3 coordinates) and minimal degree
   liftings of ordinary elliptic curves.  (Depends on `gt.m`.)
+
 * `lift_j.m`: contains routines to find the coordinates of the
   j-invariant of the canonical lifting.  (Depends on `gt.m`.)
 
@@ -39,13 +43,13 @@ j-Invariant of the Canonical Lifting][jinv].
 
 
 
-[comp]: https://mathscinet.ams.org/mathscinet/search/publdoc.html?arg3=&co4=AND&co5=AND&co6=AND&co7=AND&dr=all&pg4=AUCN&pg5=TI&pg6=PC&pg7=TI&pg8=ET&review_format=html&s4=finotti&s5=&s6=&s7=&s8=All&sort=Newest&vfpref=html&yearRangeFirst=&yearRangeSecond=&yrop=eq&r=2&mx-pid=3248165
+[comp]: http://www.math.utk.edu/~finotti/papers/witt.pdf
 
-[canlift]: https://mathscinet.ams.org/mathscinet/search/publdoc.html?arg3=&co4=AND&co5=AND&co6=AND&co7=AND&dr=all&pg4=AUCN&pg5=TI&pg6=PC&pg7=TI&pg8=ET&review_format=html&s4=finotti&s5=&s6=&s7=&s8=All&sort=Newest&vfpref=html&yearRangeFirst=&yearRangeSecond=&yrop=eq&r=12&mx-pid=1924093
+[canlift]: http://www.math.utk.edu/~finotti/papers/degs.pdf
 
-[minlift]: https://mathscinet.ams.org/mathscinet/search/publdoc.html?arg3=&co4=AND&co5=AND&co6=AND&co7=AND&dr=all&pg4=AUCN&pg5=TI&pg6=PC&pg7=TI&pg8=ET&review_format=html&s4=finotti&s5=&s6=&s7=&s8=All&sort=Newest&vfpref=html&yearRangeFirst=&yearRangeSecond=&yrop=eq&r=11&mx-pid=2044910
+[minlift]: http://www.math.utk.edu/~finotti/papers/mindeg.pdf
 
-[jinv]: https://mathscinet.ams.org/mathscinet/search/publdoc.html?arg3=&co4=AND&co5=AND&co6=AND&co7=AND&dr=all&pg4=AUCN&pg5=TI&pg6=PC&pg7=TI&pg8=ET&review_format=html&s4=finotti&s5=&s6=&s7=&s8=All&sort=Newest&vfpref=html&yearRangeFirst=&yearRangeSecond=&yrop=eq&r=3&mx-pid=3127898
+[jinv]: http://www.math.utk.edu/~finotti/papers/jn.pdf
 
 
 
@@ -76,7 +80,7 @@ computations can be computed in three different ways:
 
 The following functions are provided in `witt.m`:
 
-* `WittSum`: sums two Witt vectors.
+* `WittSum`: adds two Witt vectors.
 * `WittProd`: multiplies two Witt vectors.
 * `WittNeg`: gives the additive inverse of a Witt vector.
 * `WittInv`: gives the multiplicative inverse of a Witt vector (if
@@ -179,6 +183,10 @@ length 3) with:
 ```
 epols:=etapols(p,2);
 ```
+(Note that we use `2` as the second argument to give length of 3.
+This is because we often see vectors of length `n+1` as
+`[a0,a1,...,an]`, so `n` corresponds to the last coordinate (when
+counting from 0.)  We use this convention through out.)
 Then, when we need to compute with Witt vectors of length 3 with
 entries in characteristic `p`, we can pass these polynomials as an
 optional argument `pols`.  The routines then use those, instead of
@@ -281,3 +289,250 @@ eta polynomials (for method 1) or the binomials (for methods 2 and 3)
 as above.  Otherwise, they will be computed every time you call
 perform a computation, and for longer lengths or higher
 characteristics, these alone can take some time.
+
+
+### Conversions
+
+The file `etas.m` also provide a few basic functions.
+
+* `IntToWitt` converts an integer to a Witt vector of a given length
+  an entries in a specified prime field.
+
+* `WittVToSeries` converts a Witt vector over a finite field to a
+  p-adic (truncated) power series in an unramified extension of the
+  p-adic integers.
+
+* `SeriesToWittV` converts a a
+  p-adic (truncated) power series in an unramified extension of the
+  p-adic integers to a Witt vector.
+
+
+Here are some examples.
+
+Let's convert 1728 into a Witt vector of length 3 over the field
+with 5 elements.
+```
+> IntToWitt(1728,5,2);
+[ 3, 2, 0 ]
+```
+(Again, note we use second argument as `2` to give length 3.)
+
+Converting from Witt vector to power series:
+```
+> F<a> := GF(5^3);
+> WittVToSeries([a,F!2,a^7,a^100]);
+-190*aa^2 - 219*aa - 305 + O(5^4)
+
+> s := WittVToSeries([a,F!2,a^7,a^100]); s;
+-190*aa^2 - 219*aa - 305 + O(5^4)
+
+> Parent(s);
+Unramified extension defined by the polynomial (1 + O(5^4))*x^3 + O(5^4)*x^2 + 
+    (3 + O(5^4))*x + 3 + O(5^4)
+ over 5-adic ring
+
+> F!s;
+a
+```
+
+
+Now, converting from series to Witt vector:
+```
+> Z5 := pAdicRing(5 : Precision:=4);     
+> Z125<aa> := ext<Z5 | 3>;
+> Z125;
+Unramified extension defined by the polynomial (1 + O(5^4))*x^3 + O(5^4)*x^2 + 
+    (3 + O(5^4))*x + 3 + O(5^4)
+ over 5-adic ring
+
+> F!aa;
+a
+
+> x := Random(Z125); x;
+-120*aa^2 + 59*aa - 241 + O(5^4)
+
+> SeriesToWittV(x);
+[ a^34, 4, a^40, a^65 ]
+```
+
+### Greenberg Transform
+
+
+The file `gt.m` provides the following functions:
+
+* `GT`: computes the Greenberg transform of polynomials (over Witt
+  vectors) in two variables.  In particular, it provides an efficient
+  way to evaluate such polynomials.
+
+* `Pol_GT_Form`: Converts a polynomial over the integers in two
+  variables to the form that is needed for the input of `GT`.
+
+The input for `GT` (a polynomial in two variables with coefficients in
+the ring of Witt vectors) must be given in the form ` [ m1, m2, ... ]`
+where each `mi` corresponds to a monomial and has the form `[* vi, ki,
+li *]`, where `vi` is the coefficient of the monomial, and `ki` and `li` are the
+powers of the first and second variable, respectively, for the
+corresponding monomial.
+
+Here are some examples:
+```
+> p:=3; d:=4; F<a>:=GF(p^d);
+> pol := [ [* [a,F!2,a^5], 2,0 *], [* [a,F!0,F!1], 1, 1 *], [* [F!1,a^7,F!0], 0, 0 *] ];
+> GT(pol);
+[
+    a*x0^2 + a*x0*y0 + 1,
+    2*x0^6 + a^43*x0^5*y0 + a^43*x0^4*y0^2 + a^42*x0^4 + a^43*x0^3*x1 + a^2*x0^3*y0 + a^3*x0^3*y1 + a^42*x0^2*y0^2 + a^41*x0^2 + 
+        a^41*x0*y0 + a^3*x1*y0^3 + a^7,
+    a^5*x0^18 + a^38*x0^17*y0 + a^72*x0^16*y0^2 + a^37*x0^16 + a^3*x0^15*x1 + a^46*x0^15*y0^3 + a^31*x0^15*y0 + a^43*x0^15*y1 + 
+        a^46*x0^14*x1*y0 + a^37*x0^14*y0^4 + a^2*x0^14*y0^2 + a^6*x0^14*y0*y1 + a^70*x0^14 + a^77*x0^13*x1*y0^2 + a^45*x0^13*x1 + 
+        a^49*x0^13*y0^5 + a^48*x0^13*y0^3 + a^37*x0^13*y0^2*y1 + a*x0^13*y0 + a^5*x0^13*y1 + a^6*x0^12*x1^2 + a^57*x0^12*x1*y0^3 + 
+        a^36*x0^12*x1*y0 + a^6*x0^12*x1*y1 + a^49*x0^12*y0^4 + a^9*x0^12*y0^3*y1 + a^4*x0^12*y0^2 + a^76*x0^12*y0*y1 + a^6*x0^12*y1^2
+        + a^34*x0^12 + a^9*x0^11*x1^2*y0 + a^10*x0^11*x1*y0^4 + a^45*x0^11*x1*y0^2 + a^9*x0^11*x1*y0*y1 + a^75*x0^11*x1 + 
+        a^49*x0^11*y0^7 + a^48*x0^11*y0^5 + a^49*x0^11*y0^4*y1 + a^47*x0^11*y0^3 + a^5*x0^11*y0^2*y1 + a^9*x0^11*y0*y1^2 + 
+        a^9*x0^11*y0 + a^35*x0^11*y1 + a^9*x0^10*x1^2*y0^2 + a^8*x0^10*x1^2 + a^37*x0^10*x1*y0^5 + a^5*x0^10*x1*y0^3 + 
+        a^9*x0^10*x1*y0^2*y1 + a^44*x0^10*x1*y0 + a^8*x0^10*x1*y1 + a^49*x0^10*y0^8 + a^35*x0^10*y0^4 + a^9*x0^10*y0^2*y1^2 + 
+        a^52*x0^10*y0^2 + a^4*x0^10*y0*y1 + a^8*x0^10*y1^2 + a^16*x0^10 + a^12*x0^9*x1^3 + a^6*x0^9*x1^2*y0^3 + a^48*x0^9*x1^2*y0 + 
+        a^49*x0^9*x1^2*y1 + a^9*x0^9*x1*y0^6 + a^45*x0^9*x1*y0^4 + a^46*x0^9*x1*y0^3*y1 + a^7*x0^9*x1*y0^2 + a^48*x0^9*x1*y0*y1 + 
+        a^9*x0^9*x1*y1^2 + a^9*x0^9*x1 + a^49*x0^9*x2 + x0^9*y0^9 + a^8*x0^9*y0^7 + a^8*x0^9*y0^4*y1 + a^73*x0^9*y0^3 + 
+        a^47*x0^9*y0^2*y1 + a^48*x0^9*y0*y1^2 + a^35*x0^9*y0 + a^49*x0^9*y1 + a^9*x0^9*y2 + a^9*x0^8*x1^2*y0^4 + a^8*x0^8*x1^2*y0^2 +
+        a^7*x0^8*x1^2 + a^49*x0^8*x1*y0^7 + a^5*x0^8*x1*y0^5 + a^49*x0^8*x1*y0^4*y1 + a^35*x0^8*x1*y0^3 + a^8*x0^8*x1*y0^2*y1 + 
+        a^13*x0^8*x1*y0 + a^7*x0^8*x1*y1 + a^48*x0^8*y0^8 + a^28*x0^8*y0^4 + a^8*x0^8*y0^2*y1^2 + a^16*x0^8*y0^2 + a^53*x0^8*y0*y1 + 
+        a^7*x0^8*y1^2 + a^50*x0^8 + a^9*x0^7*x1^2*y0^5 + a^8*x0^7*x1^2*y0^3 + a^7*x0^7*x1^2*y0 + a^49*x0^7*x1*y0^5*y1 + 
+        a^8*x0^7*x1*y0^4 + a^48*x0^7*x1*y0^3*y1 + a^13*x0^7*x1*y0^2 + a^7*x0^7*x1*y0*y1 + a^67*x0^7*x1 + a^47*x0^7*y0^7 + 
+        a^46*x0^7*y0^5 + a^47*x0^7*y0^4*y1 + a^45*x0^7*y0^3 + a^53*x0^7*y0^2*y1 + a^7*x0^7*y0*y1^2 + a^7*x0^7*y0 + a^27*x0^7*y1 + 
+        a^49*x0^6*x1^3*y0^3 + a^6*x0^6*x1^2*y0^6 + a^48*x0^6*x1^2*y0^4 + a^49*x0^6*x1^2*y0^3*y1 + a^53*x0^6*x1^2 + a^8*x0^6*x1*y0^7 +
+        a^47*x0^6*x1*y0^5 + a^8*x0^6*x1*y0^4*y1 + a^49*x0^6*x1*y0^3*y1^2 + a^50*x0^6*x1*y0^3 + a^27*x0^6*x1*y0 + a^53*x0^6*x1*y1 + 
+        a^29*x0^6*y0^4 + a^6*x0^6*y0^3*y1 + a^51*x0^6*y0^2 + a^67*x0^6*y0*y1 + a^53*x0^6*y1^2 + a*x0^6 + a^9*x0^5*x1^2*y0^7 + 
+        a^8*x0^5*x1^2*y0^5 + a^7*x0^5*x1^2*y0^3 + a^48*x0^5*x1*y0^5*y1 + a^53*x0^5*x1*y0^4 + a^47*x0^5*x1*y0^3*y1 + a^67*x0^5*x1*y0^2
+        + a^11*x0^5*x1 + a^45*x0^5*y0^5 + a^44*x0^5*y0^3 + a^27*x0^5*y0^2*y1 + a^17*x0^5*y0 + a^51*x0^5*y1 + a^9*x0^4*x1^2*y0^8 + 
+        a^8*x0^4*x1^2*y0^6 + a^7*x0^4*x1^2*y0^4 + a^47*x0^4*x1*y0^7 + a^53*x0^4*x1*y0^5 + a^47*x0^4*x1*y0^4*y1 + a^27*x0^4*x1*y0^3 + 
+        a^11*x0^4*x1*y0 + a^26*x0^4*y0^4 + a^17*x0^4*y0^2 + a^51*x0^4*y0*y1 + a^45*x0^4 + a^9*x0^3*x1^3*y0^6 + a^48*x0^3*x1^2*y0^7 + 
+        a^49*x0^3*x1^2*y0^6*y1 + a^53*x0^3*x1^2*y0^3 + a^6*x0^3*x1*y0^6 + a^67*x0^3*x1*y0^4 + a^13*x0^3*x1*y0^3*y1 + a^17*x0^3*x1 + 
+        a^10*x0^3*y0^3 + a^5*x0^3*y0 + a^57*x0^3*y1 + a^8*x0^2*x1^2*y0^8 + a^7*x0^2*x1^2*y0^6 + a^27*x0^2*x1*y0^5 + a^51*x0^2*x1*y0^3
+        + a^45*x0^2*y0^2 + a^7*x0^2 + a^7*x0*x1^2*y0^7 + a^51*x0*x1*y0^4 + a^7*x0*y0 + a^9*x1^6 + a^9*x1^3*y1^3 + a^53*x1^2*y0^6 + 
+        a^57*x1*y0^3 + a^9*x2*y0^9
+]
+```
+
+As with the other functions, you can specify the method for the
+computations with the optional argument `choice`.  For the method 1
+(the default), again as above, you can use the optional argument
+`pols` to give the function precomputed eta polynomials.  For methods
+2 or 3, you can use the optional argument `bintab` to pass along the
+table of the used table of binomials used with those methods.
+
+For example:
+```
+> epols := etapols(p,2);
+> GT(pol : pols:=epols);
+[
+    a*x0^2 + a*x0*y0 + 1,
+    2*x0^6 + a^43*x0^5*y0 + a^43*x0^4*y0^2 + a^42*x0^4 + a^43*x0^3*x1 + a^2*x0^3*y0 + a^3*x0^3*y1 + a^42*x0^2*y0^2 + a^41*x0^2 + 
+        a^41*x0*y0 + a^3*x1*y0^3 + a^7,
+    a^5*x0^18 + a^38*x0^17*y0 + a^72*x0^16*y0^2 + a^37*x0^16 + a^3*x0^15*x1 + a^46*x0^15*y0^3 + a^31*x0^15*y0 + a^43*x0^15*y1 + 
+        a^46*x0^14*x1*y0 + a^37*x0^14*y0^4 + a^2*x0^14*y0^2 + a^6*x0^14*y0*y1 + a^70*x0^14 + a^77*x0^13*x1*y0^2 + a^45*x0^13*x1 + 
+        a^49*x0^13*y0^5 + a^48*x0^13*y0^3 + a^37*x0^13*y0^2*y1 + a*x0^13*y0 + a^5*x0^13*y1 + a^6*x0^12*x1^2 + a^57*x0^12*x1*y0^3 + 
+        a^36*x0^12*x1*y0 + a^6*x0^12*x1*y1 + a^49*x0^12*y0^4 + a^9*x0^12*y0^3*y1 + a^4*x0^12*y0^2 + a^76*x0^12*y0*y1 + a^6*x0^12*y1^2
+        + a^34*x0^12 + a^9*x0^11*x1^2*y0 + a^10*x0^11*x1*y0^4 + a^45*x0^11*x1*y0^2 + a^9*x0^11*x1*y0*y1 + a^75*x0^11*x1 + 
+        a^49*x0^11*y0^7 + a^48*x0^11*y0^5 + a^49*x0^11*y0^4*y1 + a^47*x0^11*y0^3 + a^5*x0^11*y0^2*y1 + a^9*x0^11*y0*y1^2 + 
+        a^9*x0^11*y0 + a^35*x0^11*y1 + a^9*x0^10*x1^2*y0^2 + a^8*x0^10*x1^2 + a^37*x0^10*x1*y0^5 + a^5*x0^10*x1*y0^3 + 
+        a^9*x0^10*x1*y0^2*y1 + a^44*x0^10*x1*y0 + a^8*x0^10*x1*y1 + a^49*x0^10*y0^8 + a^35*x0^10*y0^4 + a^9*x0^10*y0^2*y1^2 + 
+        a^52*x0^10*y0^2 + a^4*x0^10*y0*y1 + a^8*x0^10*y1^2 + a^16*x0^10 + a^12*x0^9*x1^3 + a^6*x0^9*x1^2*y0^3 + a^48*x0^9*x1^2*y0 + 
+        a^49*x0^9*x1^2*y1 + a^9*x0^9*x1*y0^6 + a^45*x0^9*x1*y0^4 + a^46*x0^9*x1*y0^3*y1 + a^7*x0^9*x1*y0^2 + a^48*x0^9*x1*y0*y1 + 
+        a^9*x0^9*x1*y1^2 + a^9*x0^9*x1 + a^49*x0^9*x2 + x0^9*y0^9 + a^8*x0^9*y0^7 + a^8*x0^9*y0^4*y1 + a^73*x0^9*y0^3 + 
+        a^47*x0^9*y0^2*y1 + a^48*x0^9*y0*y1^2 + a^35*x0^9*y0 + a^49*x0^9*y1 + a^9*x0^9*y2 + a^9*x0^8*x1^2*y0^4 + a^8*x0^8*x1^2*y0^2 +
+        a^7*x0^8*x1^2 + a^49*x0^8*x1*y0^7 + a^5*x0^8*x1*y0^5 + a^49*x0^8*x1*y0^4*y1 + a^35*x0^8*x1*y0^3 + a^8*x0^8*x1*y0^2*y1 + 
+        a^13*x0^8*x1*y0 + a^7*x0^8*x1*y1 + a^48*x0^8*y0^8 + a^28*x0^8*y0^4 + a^8*x0^8*y0^2*y1^2 + a^16*x0^8*y0^2 + a^53*x0^8*y0*y1 + 
+        a^7*x0^8*y1^2 + a^50*x0^8 + a^9*x0^7*x1^2*y0^5 + a^8*x0^7*x1^2*y0^3 + a^7*x0^7*x1^2*y0 + a^49*x0^7*x1*y0^5*y1 + 
+        a^8*x0^7*x1*y0^4 + a^48*x0^7*x1*y0^3*y1 + a^13*x0^7*x1*y0^2 + a^7*x0^7*x1*y0*y1 + a^67*x0^7*x1 + a^47*x0^7*y0^7 + 
+        a^46*x0^7*y0^5 + a^47*x0^7*y0^4*y1 + a^45*x0^7*y0^3 + a^53*x0^7*y0^2*y1 + a^7*x0^7*y0*y1^2 + a^7*x0^7*y0 + a^27*x0^7*y1 + 
+        a^49*x0^6*x1^3*y0^3 + a^6*x0^6*x1^2*y0^6 + a^48*x0^6*x1^2*y0^4 + a^49*x0^6*x1^2*y0^3*y1 + a^53*x0^6*x1^2 + a^8*x0^6*x1*y0^7 +
+        a^47*x0^6*x1*y0^5 + a^8*x0^6*x1*y0^4*y1 + a^49*x0^6*x1*y0^3*y1^2 + a^50*x0^6*x1*y0^3 + a^27*x0^6*x1*y0 + a^53*x0^6*x1*y1 + 
+        a^29*x0^6*y0^4 + a^6*x0^6*y0^3*y1 + a^51*x0^6*y0^2 + a^67*x0^6*y0*y1 + a^53*x0^6*y1^2 + a*x0^6 + a^9*x0^5*x1^2*y0^7 + 
+        a^8*x0^5*x1^2*y0^5 + a^7*x0^5*x1^2*y0^3 + a^48*x0^5*x1*y0^5*y1 + a^53*x0^5*x1*y0^4 + a^47*x0^5*x1*y0^3*y1 + a^67*x0^5*x1*y0^2
+        + a^11*x0^5*x1 + a^45*x0^5*y0^5 + a^44*x0^5*y0^3 + a^27*x0^5*y0^2*y1 + a^17*x0^5*y0 + a^51*x0^5*y1 + a^9*x0^4*x1^2*y0^8 + 
+        a^8*x0^4*x1^2*y0^6 + a^7*x0^4*x1^2*y0^4 + a^47*x0^4*x1*y0^7 + a^53*x0^4*x1*y0^5 + a^47*x0^4*x1*y0^4*y1 + a^27*x0^4*x1*y0^3 + 
+        a^11*x0^4*x1*y0 + a^26*x0^4*y0^4 + a^17*x0^4*y0^2 + a^51*x0^4*y0*y1 + a^45*x0^4 + a^9*x0^3*x1^3*y0^6 + a^48*x0^3*x1^2*y0^7 + 
+        a^49*x0^3*x1^2*y0^6*y1 + a^53*x0^3*x1^2*y0^3 + a^6*x0^3*x1*y0^6 + a^67*x0^3*x1*y0^4 + a^13*x0^3*x1*y0^3*y1 + a^17*x0^3*x1 + 
+        a^10*x0^3*y0^3 + a^5*x0^3*y0 + a^57*x0^3*y1 + a^8*x0^2*x1^2*y0^8 + a^7*x0^2*x1^2*y0^6 + a^27*x0^2*x1*y0^5 + a^51*x0^2*x1*y0^3
+        + a^45*x0^2*y0^2 + a^7*x0^2 + a^7*x0*x1^2*y0^7 + a^51*x0*x1*y0^4 + a^7*x0*y0 + a^9*x1^6 + a^9*x1^3*y1^3 + a^53*x1^2*y0^6 + 
+        a^57*x1*y0^3 + a^9*x2*y0^9
+]
+
+> bt := BinTab(p,2);
+> GT(pol : choice :=2, bintab:=bt);
+[
+    a*x0^2 + a*x0*y0 + 1,
+    2*x0^6 + a^43*x0^5*y0 + a^43*x0^4*y0^2 + a^42*x0^4 + a^43*x0^3*x1 + a^2*x0^3*y0 + a^3*x0^3*y1 + a^42*x0^2*y0^2 + a^41*x0^2 + 
+        a^41*x0*y0 + a^3*x1*y0^3 + a^7,
+    a^5*x0^18 + a^38*x0^17*y0 + a^72*x0^16*y0^2 + a^37*x0^16 + a^3*x0^15*x1 + a^46*x0^15*y0^3 + a^31*x0^15*y0 + a^43*x0^15*y1 + 
+        a^46*x0^14*x1*y0 + a^37*x0^14*y0^4 + a^2*x0^14*y0^2 + a^6*x0^14*y0*y1 + a^70*x0^14 + a^77*x0^13*x1*y0^2 + a^45*x0^13*x1 + 
+        a^49*x0^13*y0^5 + a^48*x0^13*y0^3 + a^37*x0^13*y0^2*y1 + a*x0^13*y0 + a^5*x0^13*y1 + a^6*x0^12*x1^2 + a^57*x0^12*x1*y0^3 + 
+        a^36*x0^12*x1*y0 + a^6*x0^12*x1*y1 + a^49*x0^12*y0^4 + a^9*x0^12*y0^3*y1 + a^4*x0^12*y0^2 + a^76*x0^12*y0*y1 + a^6*x0^12*y1^2
+        + a^34*x0^12 + a^9*x0^11*x1^2*y0 + a^10*x0^11*x1*y0^4 + a^45*x0^11*x1*y0^2 + a^9*x0^11*x1*y0*y1 + a^75*x0^11*x1 + 
+        a^49*x0^11*y0^7 + a^48*x0^11*y0^5 + a^49*x0^11*y0^4*y1 + a^47*x0^11*y0^3 + a^5*x0^11*y0^2*y1 + a^9*x0^11*y0*y1^2 + 
+        a^9*x0^11*y0 + a^35*x0^11*y1 + a^9*x0^10*x1^2*y0^2 + a^8*x0^10*x1^2 + a^37*x0^10*x1*y0^5 + a^5*x0^10*x1*y0^3 + 
+        a^9*x0^10*x1*y0^2*y1 + a^44*x0^10*x1*y0 + a^8*x0^10*x1*y1 + a^49*x0^10*y0^8 + a^35*x0^10*y0^4 + a^9*x0^10*y0^2*y1^2 + 
+        a^52*x0^10*y0^2 + a^4*x0^10*y0*y1 + a^8*x0^10*y1^2 + a^16*x0^10 + a^12*x0^9*x1^3 + a^6*x0^9*x1^2*y0^3 + a^48*x0^9*x1^2*y0 + 
+        a^49*x0^9*x1^2*y1 + a^9*x0^9*x1*y0^6 + a^45*x0^9*x1*y0^4 + a^46*x0^9*x1*y0^3*y1 + a^7*x0^9*x1*y0^2 + a^48*x0^9*x1*y0*y1 + 
+        a^9*x0^9*x1*y1^2 + a^9*x0^9*x1 + a^49*x0^9*x2 + x0^9*y0^9 + a^8*x0^9*y0^7 + a^8*x0^9*y0^4*y1 + a^73*x0^9*y0^3 + 
+        a^47*x0^9*y0^2*y1 + a^48*x0^9*y0*y1^2 + a^35*x0^9*y0 + a^49*x0^9*y1 + a^9*x0^9*y2 + a^9*x0^8*x1^2*y0^4 + a^8*x0^8*x1^2*y0^2 +
+        a^7*x0^8*x1^2 + a^49*x0^8*x1*y0^7 + a^5*x0^8*x1*y0^5 + a^49*x0^8*x1*y0^4*y1 + a^35*x0^8*x1*y0^3 + a^8*x0^8*x1*y0^2*y1 + 
+        a^13*x0^8*x1*y0 + a^7*x0^8*x1*y1 + a^48*x0^8*y0^8 + a^28*x0^8*y0^4 + a^8*x0^8*y0^2*y1^2 + a^16*x0^8*y0^2 + a^53*x0^8*y0*y1 + 
+        a^7*x0^8*y1^2 + a^50*x0^8 + a^9*x0^7*x1^2*y0^5 + a^8*x0^7*x1^2*y0^3 + a^7*x0^7*x1^2*y0 + a^49*x0^7*x1*y0^5*y1 + 
+        a^8*x0^7*x1*y0^4 + a^48*x0^7*x1*y0^3*y1 + a^13*x0^7*x1*y0^2 + a^7*x0^7*x1*y0*y1 + a^67*x0^7*x1 + a^47*x0^7*y0^7 + 
+        a^46*x0^7*y0^5 + a^47*x0^7*y0^4*y1 + a^45*x0^7*y0^3 + a^53*x0^7*y0^2*y1 + a^7*x0^7*y0*y1^2 + a^7*x0^7*y0 + a^27*x0^7*y1 + 
+        a^49*x0^6*x1^3*y0^3 + a^6*x0^6*x1^2*y0^6 + a^48*x0^6*x1^2*y0^4 + a^49*x0^6*x1^2*y0^3*y1 + a^53*x0^6*x1^2 + a^8*x0^6*x1*y0^7 +
+        a^47*x0^6*x1*y0^5 + a^8*x0^6*x1*y0^4*y1 + a^49*x0^6*x1*y0^3*y1^2 + a^50*x0^6*x1*y0^3 + a^27*x0^6*x1*y0 + a^53*x0^6*x1*y1 + 
+        a^29*x0^6*y0^4 + a^6*x0^6*y0^3*y1 + a^51*x0^6*y0^2 + a^67*x0^6*y0*y1 + a^53*x0^6*y1^2 + a*x0^6 + a^9*x0^5*x1^2*y0^7 + 
+        a^8*x0^5*x1^2*y0^5 + a^7*x0^5*x1^2*y0^3 + a^48*x0^5*x1*y0^5*y1 + a^53*x0^5*x1*y0^4 + a^47*x0^5*x1*y0^3*y1 + a^67*x0^5*x1*y0^2
+        + a^11*x0^5*x1 + a^45*x0^5*y0^5 + a^44*x0^5*y0^3 + a^27*x0^5*y0^2*y1 + a^17*x0^5*y0 + a^51*x0^5*y1 + a^9*x0^4*x1^2*y0^8 + 
+        a^8*x0^4*x1^2*y0^6 + a^7*x0^4*x1^2*y0^4 + a^47*x0^4*x1*y0^7 + a^53*x0^4*x1*y0^5 + a^47*x0^4*x1*y0^4*y1 + a^27*x0^4*x1*y0^3 + 
+        a^11*x0^4*x1*y0 + a^26*x0^4*y0^4 + a^17*x0^4*y0^2 + a^51*x0^4*y0*y1 + a^45*x0^4 + a^9*x0^3*x1^3*y0^6 + a^48*x0^3*x1^2*y0^7 + 
+        a^49*x0^3*x1^2*y0^6*y1 + a^53*x0^3*x1^2*y0^3 + a^6*x0^3*x1*y0^6 + a^67*x0^3*x1*y0^4 + a^13*x0^3*x1*y0^3*y1 + a^17*x0^3*x1 + 
+        a^10*x0^3*y0^3 + a^5*x0^3*y0 + a^57*x0^3*y1 + a^8*x0^2*x1^2*y0^8 + a^7*x0^2*x1^2*y0^6 + a^27*x0^2*x1*y0^5 + a^51*x0^2*x1*y0^3
+        + a^45*x0^2*y0^2 + a^7*x0^2 + a^7*x0*x1^2*y0^7 + a^51*x0*x1*y0^4 + a^7*x0*y0 + a^9*x1^6 + a^9*x1^3*y1^3 + a^53*x1^2*y0^6 + 
+        a^57*x1*y0^3 + a^9*x2*y0^9
+]
+```
+
+One can also use the function `GT` to evaluate polynomials in two
+variables using the optional argument `vvars`.  For instance, if given
+Witt vectors `v` and `w` we want to compute, say, `v^2*w + 2*v*w+
+w^3`, one can do:
+```
+> P<x>:=PolynomialRing(F);
+> v:=[ a^29, x + a^11, a^68 ];
+> w:=[ a^25, a^48, a^9*x^2 ]; 
+
+
+> vone := [ F!1, F!0, F!0 ];
+> vtwo := IntToWitt(2,p,2); vtwo;
+[ 2, 1, 0 ]
+
+> pol := [ [* vone, 2, 1 *], [* vtwo, 1, 1 *], [* vone, 0, 3 *] ];
+> GT(pol : pols:=epols, vvars:=v cat w);
+[
+    a^34,
+    a^17*x + a^67,
+    a^65*x^6 + a^30*x^3 + a^61*x^2 + a^16*x + 1
+]
+```
+
+Note that we could also have used `Pol_GT_Form` to produce the `pol`
+above:
+```
+> PP<X,Y>:=PolynomialRing(Integers(),2);
+> zpol := X^2*Y + 2*X*Y + Y^3;
+> Pol_GT_Form(zpol,p,2);
+[ [*
+    [ 1, 0, 0 ],
+    2, 1
+*], [*
+    [ 2, 1, 0 ],
+    1, 1
+*], [*
+    [ 1, 0, 0 ],
+    0, 3
+*] ]
+```
