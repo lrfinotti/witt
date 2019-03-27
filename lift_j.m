@@ -116,7 +116,7 @@ function lift_j(p,n : choice:=1, pols:=[], bintab:=[], tab:=[])
     end if;
     
     for i in [1..n] do
-        mp := Pol_New_Form(mpol,p,i);
+        mp := Pol_GT_Form(mpol,p,i);
         v1 := [ P!x : x in vj ] cat [ ji ];
         v2 := [ x^p : x in v1 ];
         eqtn := (GT(mp : choice:=choice, pols:=pols, bintab:=bintab, tab:=tab, vvars := v1 cat v2))[i+1];
@@ -169,7 +169,7 @@ function lift_j0(j0,n : choice:=1, pols:=[], bintab:=[], tab:=[])
     end if;
     
     for i in [1..n] do
-        mp := Pol_New_Form(mpol,p,i);
+        mp := Pol_GT_Form(mpol,p,i);
         v1 := [ P!x : x in vj ] cat [ ji ];
         v2 := [ x^p : x in v1 ];
         eqtn := (GT(mp : choice:=choice, pols:=pols, bintab:=bintab, tab:=tab, vvars := v1 cat v2))[i+1];

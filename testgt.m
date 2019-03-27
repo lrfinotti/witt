@@ -115,7 +115,7 @@ load 'mp_gt.m';
 pols:=etapols(p,n);
 
 
-mmp:=Pol_New_Form(mp,p,n : primr:=primr );
+mmp:=Pol_GT_Form(mp,p,n : primr:=primr );
 
 res2:=GT(mmp : pols:=pols, primr:=primr);
 

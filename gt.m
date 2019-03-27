@@ -42,7 +42,7 @@ end function;
 
 
 
-function Pol_New_Form(f,p,n)
+function Pol_GT_Form(f,p,n)
     // f a polynomial in two variables over Z
     // converts to format to use with GT below
     res:=[];
