@@ -130,7 +130,7 @@ function lift_j(p,n : choice:=1, pols:=[], bintab:=[], tab:=[])
         
     end for;
 
-    return vj;
+    return [ F!x : x in vj ];
 
 end function;
 
@@ -303,6 +303,8 @@ function lift_j_int(p,n: choice:=1, pols:=[], bintab:=[], tab:=[])
         
     end for;
 
-    return vj;
+    PP<j0>:=RationalFunctionField(GF(p));
+    
+    return [ PP!x : x in vj];
     
 end function;
