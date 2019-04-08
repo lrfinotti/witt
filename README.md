@@ -145,6 +145,8 @@ The following functions are provided in `witt.m`:
   vector.
 * `WittInv`: gives the multiplicative inverse of a Witt vector (if
   exists).
+* `WittDiff`: gives the difference of two Witt vectors.
+* `WittDiv`: gives the quotient of two Witt vectors (if exists).
   
 The file `gt.m` also provides `WittPower` to compute powers of Witt
 vectors.

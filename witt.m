@@ -516,7 +516,8 @@ function WittInv(v : choice:=1, pols:=[], bintab:=[])
     // if over a finite field, perform in Zq
     if IsFinite(P) and IsField(P) then
         v1 := WittVToSeries(v);
-        tmp := SeriesToWittV(1/v1);
+        PP := Parent(v1);
+        tmp := SeriesToWittV(PP!(1/v1));
         return [ P!x : x in tmp ];
     end if;
 
@@ -526,6 +527,70 @@ function WittInv(v : choice:=1, pols:=[], bintab:=[])
         return WittInv3(v :  bintab:=bintab);
     else
         return WittInv1(v :  pols:=pols);
+    end if;
+end function;
+
+
+function WittDiff(v,w : choice:=1, pols:=[], bintab:=[])
+    // choice (of algorithms): 1, 2 or 3
+    // for vetav, vetav2 or vetav3 respectively
+    // add sanity check?
+
+    //P := Parent(v[1]);
+    P := Universe(v);
+    p:=Characteristic(P);
+
+    // if over a finite field, perform in Zq
+    if IsFinite(P) and IsField(P) then
+        p:=Characteristic(P);
+        n:=#v-1;
+        k:=Degree(P);
+        Zp:=pAdicRing(p : Precision:=n+1);
+        Zq<aa>:= ext<Zp | k>;
+        v1 := WittVToSeries(v : Zq:=Zq);
+        w1 := WittVToSeries(w : Zq:=Zq);
+        PX := Parent(v1);
+        tmp := SeriesToWittV(v1 - PX!(w1));
+    end if;
+
+    if choice eq 2 then
+        return WittSum2(v, WittNeg2(w : bintab:=bintab) : bintab:=bintab);
+    elif choice eq 3 then
+        return WittSum3(v, WittNeg3(w : bintab:=bintab) : bintab:=bintab);
+    else
+        return WittSum1(v, WittNeg1(w : pols:=pols) : pols:=pols);
+    end if;
+end function;
+
+
+function WittDiv(v,w : choice:=1, pols:=[], bintab:=[])
+    // choice (of algorithms): 1, 2 or 3
+    // for vetav, vetav2 or vetav3 respectively
+    // add sanity check?
+
+    //P := Parent(v[1]);
+    P := Universe(v);
+    p:=Characteristic(P);
+
+    // if over a finite field, perform in Zq
+    if IsFinite(P) and IsField(P) then
+        p:=Characteristic(P);
+        n:=#v-1;
+        k:=Degree(P);
+        Zp:=pAdicRing(p : Precision:=n+1);
+        Zq<aa>:= ext<Zp | k>;
+        v1 := WittVToSeries(v : Zq:=Zq);
+        w1 := WittVToSeries(w : Zq:=Zq);
+        PX := Parent(v1);
+        tmp := SeriesToWittV(v1 * PX!(1/w1));
+    end if;
+
+    if choice eq 2 then
+        return WittProd2(v, WittInv2(w : bintab:=bintab) : bintab:=bintab);
+    elif choice eq 3 then
+        return WittProd3(v, WittInv3(w : bintab:=bintab) : bintab:=bintab);
+    else
+        return WittProd1(v, WittInv1(w : pols:=pols) : pols:=pols);
     end if;
 end function;
 

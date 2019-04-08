@@ -832,7 +832,7 @@ function WittPower(v,k : choice:=1, pols:=[], bintab:=[])
         Zp:=pAdicRing(p : Precision:=n+1);
         Zq<aa>:= ext<Zp | d>;
         v1 := WittVToSeries(v : Zq:=Zq);
-        tmp := SeriesToWittV(v1^k);
+        tmp := SeriesToWittV(Zq!(v1^k));
         return [ P!x : x in tmp ];
     end if;
 
