@@ -27,7 +27,9 @@ the input is not consistent with what is expected it to be.
   liftings of ordinary elliptic curves.  (Depends on `gt.m`.)
 
 * `lift_j.m`: Contains routines to find the coordinates of the
-  j-invariant of the canonical lifting.  (Depends on `gt.m`.)
+  j-invariant of the canonical lifting.  (Depends on `gt.m`.)  It also
+  contains routines to compute (non-universal) Weierstrass
+  coefficients of the canonical lifting.
 
 * `test*.m`: These are test files and can be ignored.  (I leave them
   for when I want to test changes.)
@@ -49,6 +51,8 @@ Liftings of Hyperelliptic Curves][minlift].
 For the liftings of the j-invariant, see [Coordinates of the
 j-Invariant of the Canonical Lifting][jinv].
 
+For the Weierstrass coefficients using the lift of the j-invariant,
+see [Weierstrass Coefficients of the Canonical Lifting][wcoef].
 
 
 [comp]: http://www.math.utk.edu/~finotti/papers/witt.pdf
@@ -58,6 +62,8 @@ j-Invariant of the Canonical Lifting][jinv].
 [minlift]: http://www.math.utk.edu/~finotti/papers/mindeg.pdf
 
 [jinv]: http://www.math.utk.edu/~finotti/papers/jn.pdf
+
+[wcoef]: http://www.math.utk.edu/~finotti/papers/wcoef.pdf
 
 
 
@@ -845,3 +851,34 @@ characteristic.
 ]
 ```
 
+Finally, the file `lift_j.m` also provides the function `jweier` which
+gives formulas for the Weierstrass coefficients of the canonical
+lifting of the curve `y0^2 = x0^3 + a0*x0 + b0` in terms of `a0` and
+`b0`.  These are *not* universal (as defined in [Weierstrass
+Coefficients of the Canonical Lifting][wcoef]), as it might contain
+extra powers of `a0` and `b0` in the denominator.  (See also
+[Denominators of the Weierstrass Coefficients of the Canonical
+Lifting][delong] for more details.)
+
+[delong]: http://www.math.utk.edu/~finotti/papers/delong.pdf
+
+To use just give the prime and the index:
+```
+> jweier(5,2);
+[
+    [
+        a0,
+        (2*a0^12 + 3*a0^9*b0^2 + 3*a0^6*b0^4 + 3*a0^3*b0^6 + 3*b0^8)/(a0*b0^4),
+        (3*a0^120 + 4*a0^105*b0^10 + 3*a0^96*b0^16 + 2*a0^93*b0^18 + a0^90*b0^20 + 4*a0^87*b0^22 + 4*a0^81*b0^26 + 4*a0^78*b0^28 + a0^75*b0^30 + 
+            4*a0^72*b0^32 + 3*a0^66*b0^36 + 4*a0^63*b0^38 + 4*a0^60*b0^40 + 4*a0^57*b0^42 + 2*a0^54*b0^44 + a0^51*b0^46 + 2*a0^45*b0^50 + 4*a0^36*b0^56
+            + 4*a0^33*b0^58 + a0^30*b0^60 + 2*a0^27*b0^62 + 2*a0^24*b0^64 + a0^15*b0^70 + 3*b0^80)/(a0^35*b0^40)
+    ],
+    [
+        b0,
+        (2*a0^12*b0 + 3*a0^9*b0^3 + 3*a0^6*b0^5 + 3*a0^3*b0^7 + 3*b0^9)/a0^6,
+        (3*a0^120 + 4*a0^105*b0^10 + 3*a0^96*b0^16 + 2*a0^93*b0^18 + a0^90*b0^20 + 4*a0^87*b0^22 + 4*a0^81*b0^26 + 4*a0^78*b0^28 + a0^75*b0^30 + 
+            4*a0^72*b0^32 + 3*a0^66*b0^36 + 4*a0^63*b0^38 + 4*a0^60*b0^40 + 4*a0^57*b0^42 + 2*a0^54*b0^44 + a0^51*b0^46 + 2*a0^45*b0^50 + 4*a0^36*b0^56
+            + 4*a0^33*b0^58 + a0^30*b0^60 + 2*a0^27*b0^62 + 2*a0^24*b0^64 + a0^15*b0^70 + 3*b0^80)/(a0^60*b0^15)
+    ]
+]
+```

@@ -308,3 +308,56 @@ function lift_j_int(p,n: choice:=1, pols:=[], bintab:=[], tab:=[])
     return [ PP!x : x in vj];
     
 end function;
+
+
+// Computes the NON-universal Weierstrass coefficients using
+// the lift of the j-invariant via:
+//    a = lamba^4 * 27 * j/(4*(1728 - j))
+//    b = lamba^6 * 27 * j/(4*(1728 - j))
+// where
+//    lambda^2 = (b0/a0, 0, 0, ...)
+function jweier(p,n : choice:=1, pols:=[], bintab:=[], tab:=[])
+
+    if (choice eq 1) and (#pols eq 0) then
+        pols := etapols(p,n);
+    end if;
+
+    if (choice ne 1) and (#bintab eq 0) then
+        bintab := BinTab(p,n);
+    end if;
+
+    // maxdeg = p+1
+    if #tab eq 0 then
+        tab:=bin_tab(p+1,p^(n+1)); // table of binomials to use
+    end if;
+
+    vj := lift_j(p,n : choice:=choice, pols:=pols, bintab:=bintab, tab:=tab);
+    P := Universe(vj);
+
+    v1728 := IntToWitt(1728,p,n);
+    v1728 := [ P!x : x in v1728 ];
+
+    v27 := IntToWitt(27,p,n);
+    v27 := [ P!x : x in v27 ];
+
+    v4 := IntToWitt(4,p,n);
+    v4 := [ P!x : x in v4 ];
+
+
+    vv := WittDiff(v1728,vj : choice:=choice, pols:=pols, bintab:=bintab);
+    vv := WittInv(vv : choice:=choice, pols:=pols, bintab:=bintab);
+    vv := WittProd(vj,vv : choice:=choice, pols:=pols, bintab:=bintab);
+    vv := WittProd(v27,vv: choice:=choice, pols:=pols, bintab:=bintab);
+    vv := WittDiv(vv,v4 : choice:=choice, pols:=pols, bintab:=bintab);
+
+    PP<a0,b0>:=RationalFunctionField(GF(p),2);
+
+    j:=1728*4*a0^3/(4*a0^3+27*b0^2);
+
+    vv := [ Evaluate(term,j) : term in vv ];
+
+    va := [ vv[i]*(b0^2/a0^2)^(p^(i-1)) : i in [1..(n+1)]  ];
+    vb := [ vv[i]*(b0^3/a0^3)^(p^(i-1)) : i in [1..(n+1)]  ];
+
+    return [va, vb];
+end function;
