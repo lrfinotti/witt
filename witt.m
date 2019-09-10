@@ -13,7 +13,7 @@ load 'etas.m';
 // using vetav
 function WittSum1(v1,v2 : pols:=[])
     //P:=Parent(v1[1]);
-    P:=Universe(v1);
+    P:=Universe(v1 cat v2);
     p:=Characteristic(P);
     n:=#v1-1;
     // initialize
@@ -53,7 +53,7 @@ end function;
 // using vetav2
 function WittSum2(v1,v2 : bintab:=[])
     //P:=Parent(v1[1]);
-    P:=Universe(v1);
+    P:=Universe(v1 cat v2);
     p:=Characteristic(P);
     n:=#v1-1;
     // initialize
@@ -89,7 +89,7 @@ end function;
 // using vetav3
 function WittSum3(v1,v2 : bintab:=[])
     //P:=Parent(v1[1]);
-    P:=Universe(v1);
+    P:=Universe(v1 cat v2);
     p:=Characteristic(P);
     n:=#v1-1;
     // initialize
@@ -130,7 +130,7 @@ end function;
 // using vetav
 function WittProd1(v1,v2 : pols:=[])
     //P:=Parent(v1[1]);
-    P:=Universe(v1);
+    P:=Universe(v1 cat v2);
     p:=Characteristic(P);
     n:=#v1-1;
     // initialize
@@ -179,7 +179,7 @@ end function;
 // using vetav2
 function WittProd2(v1,v2 : bintab:=[])
     //P:=Parent(v1[1]);
-    P:=Universe(v1);
+    P:=Universe(v1 cat v2);
     p:=Characteristic(P);
     n:=#v1-1;
     // initialize
@@ -223,7 +223,7 @@ end function;
 // using vetav3
 function WittProd3(v1,v2 : bintab:=[])
     //P:=Parent(v1[1]);
-    P:=Universe(v1);
+    P:=Universe(v1 cat v2);
     p:=Characteristic(P);
     n:=#v1-1;
     // initialize
@@ -415,7 +415,7 @@ function WittSum(v,w : choice:=1, pols:=[], bintab:=[])
     // for vetav, vetav2 or vetav3 respectively
     // add sanity check?
     //P := Parent(v[1]);
-    P := Universe(v);
+    P := Universe(v cat w);
 
     // if over a finite field, perform in Zq
     if IsFinite(P) and IsField(P) then
@@ -447,7 +447,7 @@ function WittProd(v,w : choice:=1, pols:=[], bintab:=[])
     // for vetav, vetav2 or vetav3 respectively
     // add sanity check?
     //P := Parent(v[1]);
-    P := Universe(v);
+    P := Universe(v cat w);
 
     // if over a finite field, perform in Zq
     if IsFinite(P) and IsField(P) then
@@ -537,7 +537,7 @@ function WittDiff(v,w : choice:=1, pols:=[], bintab:=[])
     // add sanity check?
 
     //P := Parent(v[1]);
-    P := Universe(v);
+    P := Universe(v cat w);
     p:=Characteristic(P);
 
     // if over a finite field, perform in Zq
@@ -569,7 +569,7 @@ function WittDiv(v,w : choice:=1, pols:=[], bintab:=[])
     // add sanity check?
 
     //P := Parent(v[1]);
-    P := Universe(v);
+    P := Universe(v cat w);
     p:=Characteristic(P);
 
     // if over a finite field, perform in Zq
