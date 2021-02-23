@@ -128,7 +128,6 @@ function split_Ds(f,p,max,PR)
         coef:=Integers()!(MonomialCoefficient(f,mon));
         vcoef:=IntToWitt(coef,p,max);
         for i in [1..(max+1)] do
-            //res[i]+:=PR!(vcoef[i])*PR!mon;
             //res[i]+:=PR!(vcoef[i])*PR!mon; // ambigous coercion
             res[i]+:=PR!(vcoef[i])*Monomial(PR, Exponents(mon));
         end for;
