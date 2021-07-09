@@ -645,7 +645,7 @@ function GT_Ds3(n,r,p,PR)
             // print "splid Ds";
             tmp2:=split_Ds3(Coefficient(tmp1,k),p,n-k);
             for t in [0..(n-k)] do
-                //vecDs[[n,r,i,k,t]]:=PR!tmp2[t+1];  // ambiguous coersion
+                //vecDs[[n,r,i,k,t]]:=PR!tmp2[t+1];  // ambiguous coercion
                 if tmp2[t+1] eq 0 then
                     vecDs[[n,r,i,k,t]]:= PR!0;
                 else
