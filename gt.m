@@ -373,7 +373,8 @@ function split_Ds2(f,p,max,PR)
         coef:=Integers()!(MonomialCoefficient(f,mon));
         vcoef:=IntToWitt(coef,p,max);
         for i in [1..(max+1)] do
-            res[i]+:=PR!(vcoef[i])*PR!mon;
+            //res[i]+:=PR!(vcoef[i])*PR!mon; // ambigous coercion
+            res[i]+:=PR!(vcoef[i])*Monomial(PR, Exponents(mon));
         end for;
     end for;
 
@@ -604,7 +605,9 @@ function split_Ds3(f,p,max)
         coef:=Integers()!(MonomialCoefficient(f,mon));
         vcoef:=IntToWitt(coef,p,max);
         for i in [1..(max+1)] do
-            res[i]+:=PR3!(vcoef[i])*PR3!mon;
+            //res[i]+:=PR3!(vcoef[i])*PR3!mon;  // ambigous coercion
+            //res[i]+:=PR3!(vcoef[i])*Monomial(PR3, Exponents(mon));
+            res[i]+:=(vcoef[i])*Monomial(PR3, Exponents(mon));
         end for;
     end for;
 
@@ -642,12 +645,18 @@ function GT_Ds3(n,r,p,PR)
             // print "splid Ds";
             tmp2:=split_Ds3(Coefficient(tmp1,k),p,n-k);
             for t in [0..(n-k)] do
-                vecDs[[n,r,i,k,t]]:=PR!tmp2[t+1];
+                //vecDs[[n,r,i,k,t]]:=PR!tmp2[t+1];  // ambiguous coersion
+                if tmp2[t+1] eq 0 then
+                    vecDs[[n,r,i,k,t]]:= PR!0;
+                else
+                    vecDs[[n,r,i,k,t]]:= &+[MonomialCoefficient(tmp2[t+1], mon)*Monomial(PR, Exponents(mon)) : mon in Monomials(tmp2[t+1])];
+                end if;
             end for;
         end for;
     end for;
 
     return vecDs;
+    print vecDs;
 
 end function;
 
