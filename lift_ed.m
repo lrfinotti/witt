@@ -30,6 +30,48 @@ function my_y_int(f)
 end function;
 
 
+function reduce_pol(f, a0, b0)
+    // reduce polynomial f module b0*x0^2 + y0^2 - 1 - a0*x0^2y0^2
+    // the result should be of the form f1(x0) + f2(y0) + x0*f3(y0) + y0*f4(x0)
+    //
+    // NOTE: this seems to be the same as reducing modulo the equation in Magma,
+    // which should be faster!!!
+    x0 := Parent(f).1;
+    y0 := Parent(f).2;
+
+    repl_pol := b0/a0*x0^2 + y0^2/a0 - 1/a0;
+
+    res := 0;
+    g := f;
+    // let's add the "good" terms to the result
+    while g ne 0 do
+        good_terms := 0;
+        for mon in Monomials(g) do
+            if (Degree(mon,1) eq 0) or (Degree(mon,2) eq 0) or (Degree(mon,1) eq 1)
+                or (Degree(mon,2) eq 1) then
+                good_terms +:= MonomialCoefficient(g, mon)*mon;
+            end if;
+        end for;
+
+        g -:= good_terms; // "bad terms"
+        res +:= good_terms;
+
+        // let's remove some bad terms from g
+        newg := 0;
+        for mon in Monomials(g) do
+            m := Degree(mon,1);
+            n := Degree(mon,2);
+            minexp := Minimum(m div 2, n div 2);
+            newg +:= MonomialCoefficient(g, mon)*x0^(m - 2*minexp)*y0^(n - 2*minexp)*repl_pol^minexp;
+        end for;
+
+        g:=newg;
+    end while;
+
+    return res;
+end function;
+
+
 
 function lift_ed(a0,b0,n : pols:=[], verb:=true, cstr:=[], check:=true, minimal:=false)
 
@@ -81,14 +123,16 @@ function lift_ed(a0,b0,n : pols:=[], verb:=true, cstr:=[], check:=true, minimal:
             end if;
 
             // necessary variables
-            // M:=2*p^(i-1)-1;
-            M := Floor((i+1)*p^(i-1) - i*p^(i-2));  // we don't need "+1" since the
-                                                    // constant terms as zero
+            // we only need the coefficients below the degree of the derivative
+            // we do not need "+1" since constant terms are zero
+            M:=2*p^(i-1)-1;
 
             // print "The value of M is: ", M;
 
-            Pi:=PolynomialRing(F,2 + 2 + M + M);
+            Pi:=PolynomialRing(F,2 + 2 + M + M + 1);
             // x_0, y_0, a_n, b_n, epsilon_i's, delta_i's (recall epsilon_0=delta_0=0)
+            // plus one additional variable to help with inverses in the computation
+            // of higher degree terms
 
             // a temporary power of f to help compute x_i's and y_i's:
             if i eq 1 then
@@ -121,36 +165,39 @@ function lift_ed(a0,b0,n : pols:=[], verb:=true, cstr:=[], check:=true, minimal:
             // we have epsilon_0 = 0
             // xi+:=&+[ Pi.(5+j)*(Pi.1)^(p*j) : j in [1..M] | j ne p^(i-1) ];
             xi+:=&+[ Pi.(4+j)*(Pi.1)^(p*j) : j in [1..M] ];
-            yi+:=&+[ Pi.(4+M+j)*(Pi.1)^(p*j) : j in [1..M] ];
+            yi+:=&+[ Pi.(4+M+j)*(Pi.2)^(p*j) : j in [1..M] ];
 
 
+            // find higher degree terms
+            if i gt 1 then
 
+                if verb then
+                    print "Coputing higher degree terms.";
+                end if;
 
-            /* // ////////////////////////////////////////////////////////// */
-            /* // Non-Minimal Conditions. */
+                vx:=[ Evaluate(x,[Pi.1,Pi.2]) : x in resx ] cat [Pi.(2*M+5)];
+                vy:=[ Evaluate(y,[Pi.1,Pi.2]) : y in resy ] cat [Pi.(2*M+5)];
 
-            /* if (not minimal) and (i eq 2) then */
-            /*     tmp:= resx[2]^2; */
-            /*         for i in [2*p^2 .. 3*p^2-2*p by p] do */
-            /*                 xi+:=Pi.1^i*Pi!(Coefficient(tmp,1, Integers()!(p + i/p))); */
-            /*         end for; */
-            /* end if; */
+                // xi
+                vinvi:=WittInv(vx, pols:=pols)[i+1];
+                num:=Numerator(vinvi);
+                rem_terms:=Coefficient(num,Pi.(2*M+5),0); // terms without xi
 
-            /* if (not minimal) and (i eq 2) then */
-            /*     tmp:= resy[2]^2; */
-            /*         for i in [2*p^2 .. 3*p^2-2*p by p] do */
-            /*                 yi+:=Pi.2^i*Pi!(Coefficient(tmp,2, Integers()!(p + i/p))); */
-            /*         end for; */
-            /* end if; */
+                for k in [2*p^(i-1)..((i+1)*p^(i-1)-i*p^(i-2))] do
+                    xi += -Coefficient(rem_terms,1,k*p+(i-1)*p^i)*(P.1)^(k*p);
+                end for;
 
-            /* // Condition for i ge 3 */
-            /* // if (not minimal) and (i ge 3) then */
-            /* // */
-            /* // end if; */
+                // yi
+                vinvi:=WittInv(vy, pols:=pols)[i+1];
+                num:=Numerator(vinvi);
+                rem_terms:=Coefficient(num,Pi.(2*M+5),0); // terms without xi
 
+                for k in [2*p^(i-1)..((i+1)*p^(i-1)-i*p^(i-2))] do
+                    yi += -Coefficient(rem_terms,2,k*p+(i-1)*p^i)*(P.2)^(k*p);
+                end for;
 
+            end if;
 
-            /* // ////////////////////////////////////////////////////////// */
 
             va:=[ Pi!x : x in resa ] cat [Pi.3];
             vb:=[ Pi!x : x in resb ] cat [Pi.4];
@@ -161,32 +208,23 @@ function lift_ed(a0,b0,n : pols:=[], verb:=true, cstr:=[], check:=true, minimal:
             vvars:=vx cat vy;
 
 
-            ///Get all the Greenberg Transform Stuff
+            // Compute the Greenberg Transform
+            if verb then
+                print "Computing the GT.";
+            end if;
 
             LeftGT:=GT( [[* vb,2,0 *], [* vone,0,2 *]] : pols:=pols, vvars:=vvars);
-
             RightGT:=GT( [[* va,2,2 *], [* vone,0,0 *]] : pols:=pols, vvars:=vvars);
 
-            RHS:=RightGT[i+1];
+            difference:=RightGT[i+1] - LeftGT[i+1];
 
-            LHS:=LeftGT[i+1];
+            // put in reduced form
+            difference:=reduce_pol(difference, a0, b0);
+            eqts:=[ MonomialCoefficient(mon) : mon in Monomials(difference) ];
 
-            tmpLHS:=Coefficient(LHS,2,0);
+            neqts:=#eqts;
 
-
-            LHS:= LHS - tmpLHS; //LHS now only has terms in that are multiples of y0
-
-            RHS:= RHS - tmpLHS; //Since RHS must be equal to LHS, it must be divisible by y0.
-
-            SystemEq:=RHS;
-
-            vrem:=Coefficients(SystemEq,2); //Gather all the terms in y0
-
-            // matrix of coefficients
-
-            neqts:=#vrem;
-
-            //print "neqts equals: ", neqts;
+            // STOPPED HERE!
 
 
             Mat:=Matrix(Parent(vrem[1]),1+M+M,neqts,
