@@ -1,6 +1,6 @@
 load 'lift_ed.m';
 
-p:=5;
+p:=11;
 
 n:=2;
 F<a0,b0>:=RationalFunctionField(GF(p), 2);
@@ -77,8 +77,16 @@ end if;
 
 jj := [j0, j1, j2];
 
-print j1 eq j[2];
-print j2 eq j[3];
+if j1 eq j[2] then
+    print "j1 is correct";
+else
+    print "j1 FAILS!!!!!";
+end if;
+if j2 eq j[3] then
+    print "j2 is correct";
+else
+    print "j2 FAILS!!!!!";
+end if;
 
 P := Parent(vx[1]);
 F := FieldOfFractions(P);
@@ -89,5 +97,42 @@ vvy := [ F!x : x in vy ];
 xninv := WittInv(vvx: pols:=pols)[n+1];
 yninv := WittInv(vvy: pols:=pols)[n+1];
 
-print Degree(Numerator(xninv),P.1), Degree(Denominator(xninv),P.1);
-print Degree(Numerator(yninv),P.2), Degree(Denominator(yninv),P.2);
+if Degree(Numerator(xninv),P.1) lt Degree(Denominator(xninv),P.1) then
+    print "1/x works";
+else
+    print "1/x FAILS!!!!";
+end if;
+
+if Degree(Numerator(yninv),P.2) lt Degree(Denominator(yninv),P.2) then
+    print "1/y works";
+else
+    print "1/y FAILS!!!!";
+end if;
+
+x1 := vx[2]; x2 := vx[3];
+y1 := vy[2]; y2 := vy[3];
+
+if [0, Evaluate(x1, [0,1]), Evaluate(x2, [0,1])] eq [0, 0 , 0] then
+    print "x(0, 1) = 0 works";
+else
+    print "x(0, 1) = 0  FAILS!!!!";
+end if;
+
+if [1, Evaluate(y1, [0,1]), Evaluate(y2, [0,1])] eq [1, 0 , 0] then
+    print "y(0, 1) = 1 works";
+else
+    print "y(0, 1) = 1  FAILS!!!!";
+end if;
+
+
+if [1/b0, Evaluate(x1, [1/b0,0]), Evaluate(x2, [1/b0,0])] eq WittInv(vb : pols:=pols) then
+    print "x(1/b0, 0) = 1/b works";
+else
+    print "x(1/b0, 0) = 1/b  FAILS!!!!";
+end if;
+
+if [0, Evaluate(y1, [1/b0,0]), Evaluate(y2, [1/b0,0])] eq [0, 0 , 0] then
+    print "y(1/b0, 0) = 0 works";
+else
+    print "y(1/b0, 0) = 0  FAILS!!!!";
+end if;
