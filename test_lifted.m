@@ -1,6 +1,6 @@
 load 'lift_ed.m';
 
-p:=11;
+p:=7;
 
 n:=2;
 F<a0,b0>:=RationalFunctionField(GF(p), 2);
@@ -8,7 +8,8 @@ F<a0,b0>:=RationalFunctionField(GF(p), 2);
 pols := etapols(p,n);
 
 
-va, vb, vx, vy := lift_ed(a0, b0, n);
+//va, vb, vx, vy := lift_ed(a0, b0, n);
+va, vx, vy := lift_ed_1(a0, n); vb:=[F!1,F!0,F!0]; b0:=F!1;
 
 v14 := IntToWitt(14, p, n);
 v16 := IntToWitt(16, p, n);
