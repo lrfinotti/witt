@@ -9,7 +9,7 @@ pols := etapols(p,n);
 
 
 //va, vb, vx, vy := lift_ed(a0, b0, n);
-va, vx, vy := lift_ed_1(a0, n);
+va, vx, vy := lift_ed_1a(a0, n);
 // vb:=[F!1,F!0,F!0]; b0:=F!1;
 vb:=[F!1,F!0,F!0,F!0]; b0:=F!1;
 
@@ -90,8 +90,8 @@ elif p eq 13 then
                                                              + 3*j0^14 + 11*j0^13 + 12*j0 + 5);
 end if;
 
-// jj := [j0, j1, j2];
-jj := [j0, j1, j2, j3];
+jj := [j0, j1, j2];
+// jj := [j0, j1, j2, j3];
 
 if j1 eq j[2] then
     print "j1 is correct";
