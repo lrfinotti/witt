@@ -1,18 +1,28 @@
 load 'lift_ed.m';
 
-p:=5;
+p:=7;
+n:=2;
 
-n:=3;
 F<a0,b0>:=RationalFunctionField(GF(p), 2);
 
 pols := etapols(p,n);
 
+// twisted or not
+twisted := false;
 
-//va, vb, vx, vy := lift_ed(a0, b0, n);
-va, vx, vy := lift_ed_1a(a0, n);
-// vb:=[F!1,F!0,F!0]; b0:=F!1;
-vb:=[F!1,F!0,F!0,F!0]; b0:=F!1;
+if twisted then
+    va, vb, vx, vy := lift_ed_b(a0, b0, n);
+else
+    va, vx, vy := lift_ed(a0, n);
+end if;
 
+if not twisted then
+    b0 := F!1;
+    vb := [b0] cat [F!0 : i in [1..n]];
+end if;
+
+
+// Testing j's
 v14 := IntToWitt(14, p, n);
 v16 := IntToWitt(16, p, n);
 va2 := WittPower(va, 2: pols:=pols);
@@ -35,7 +45,7 @@ j:=WittDiv(num,den: pols:=pols);
 
 j0 := j[1];
 
-
+// Some know values
 if p eq 5 then
     j1 := 3*j0^3 + j0^4;
     j2 := 3*j0^5 + 2*j0^10 + 2*j0^13 + 4*j0^14 + 4*j0^15 + 4*j0^16 +
@@ -90,8 +100,13 @@ elif p eq 13 then
                                                              + 3*j0^14 + 11*j0^13 + 12*j0 + 5);
 end if;
 
-jj := [j0, j1, j2];
-// jj := [j0, j1, j2, j3];
+
+// Test js'
+if n eq 2 then
+    jj := [j0, j1, j2];
+elif n eq 3 then
+    jj := [j0, j1, j2, j3];
+end if;
 
 if j1 eq j[2] then
     print "j1 is correct";
@@ -103,57 +118,86 @@ if j2 eq j[3] then
 else
     print "j2 FAILS!!!!!";
 end if;
-if j3 eq j[4] then
-    print "j3 is correct";
-else
-    print "j3 FAILS!!!!!";
+
+if n eq 3 then
+    if j3 eq j[4] then
+        print "j3 is correct";
+    else
+        print "j3 FAILS!!!!!";
+    end if;
 end if;
 
+
+// now test 1/x and 1/y
 P := Parent(vx[1]);
-F := FieldOfFractions(P);
+FF := FieldOfFractions(P);
 
-vvx := [ F!x : x in vx ];
-vvy := [ F!x : x in vy ];
+vvx := [ FF!x : x in vx ];
+vvy := [ FF!x : x in vy ];
 
-xninv := WittInv(vvx: pols:=pols)[n+1];
-yninv := WittInv(vvy: pols:=pols)[n+1];
+xninv := WittInv(vvx: pols:=pols);
+yninv := WittInv(vvy: pols:=pols);
 
-if Degree(Numerator(xninv),P.1) lt Degree(Denominator(xninv),P.1) then
-    print "1/x works";
+numxvec := [Degree(Numerator(fct),P.1) : fct in xninv];
+denxvec := [Degree(Denominator(fct),P.1) : fct in xninv];
+
+numyvec := [Degree(Numerator(fct),P.2) : fct in yninv];
+denyvec := [Degree(Denominator(fct),P.2) : fct in yninv];
+
+
+works := true;
+for i in [2..(n+1)] do
+    if numxvec[i] ge denxvec[i] then
+        works := false;
+    end if;
+end for;
+
+if works then
+    print "1/x works!";
 else
-    print "1/x FAILS!!!!";
+    print "1/x FAILS!";
 end if;
 
-if Degree(Numerator(yninv),P.2) lt Degree(Denominator(yninv),P.2) then
-    print "1/y works";
-else
-    print "1/y FAILS!!!!";
-end if;
+works := true;
+for i in [2..(n+1)] do
+    if numyvec[i] ge denyvec[i] then
+        works := false;
+    end if;
+end for;
 
-x1 := vx[2]; x2 := vx[3];
-y1 := vy[2]; y2 := vy[3];
-
-if [0, Evaluate(x1, [0,1]), Evaluate(x2, [0,1])] eq [0, 0 , 0] then
-    print "x(0, 1) = 0 works";
+if works then
+    print "1/y works!";
 else
-    print "x(0, 1) = 0  FAILS!!!!";
-end if;
-
-if [1, Evaluate(y1, [0,1]), Evaluate(y2, [0,1])] eq [1, 0 , 0] then
-    print "y(0, 1) = 1 works";
-else
-    print "y(0, 1) = 1  FAILS!!!!";
+    print "1/y FAILS!";
 end if;
 
 
-if [1/b0, Evaluate(x1, [1/b0,0]), Evaluate(x2, [1/b0,0])] eq WittInv(vb : pols:=pols) then
-    print "x(1/b0, 0) = 1/b works";
+
+// now text x(0,1) = 0
+if [Evaluate(fct, [0, 1]) : fct in vx] eq [P!0 : i in [0..n]] then
+    print "x(0,1) works";
 else
-    print "x(1/b0, 0) = 1/b  FAILS!!!!";
+    print "x(0,1) fails";
 end if;
 
-if [0, Evaluate(y1, [1/b0,0]), Evaluate(y2, [1/b0,0])] eq [0, 0 , 0] then
-    print "y(1/b0, 0) = 0 works";
+// test y(0,1) = 1
+if [Evaluate(fct, [0, 1]) : fct in vy] eq [P!1] cat [P!0 : i in [1..n]] then
+    print "y(0,1) works";
 else
-    print "y(1/b0, 0) = 0  FAILS!!!!";
+    print "y(0,1) fails";
+end if;
+
+
+// now text x(1/b0,0) = 1/b
+if [Evaluate(fct, [1/b0, 0]) : fct in vx] eq WittInv(vb : pols:=pols) then
+    print "x(1/b0,0) works";
+else
+    print "x(1/b0,0) fails";
+end if;
+
+// test y(1/b0, 0) = 1
+if [Evaluate(fct, [1/b0, 0]) : fct in vy] eq [P!0 : i in [0..n]] then
+    print "y(0,1) works";
+else
+    print "y(0,1) fails";
 end if;
