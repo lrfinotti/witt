@@ -112,8 +112,8 @@ function lift_ed(a0,n : pols:=[], verb:=true, cstr:=[], check:=true, minimal:=fa
 
         // necessary variables
         // we only need the coefficients below the degree of the derivative
-        // we do not need "+1" since constant terms are zero
-        M:=2*p^(i-1)-1;
+        // We also only need ODD powers!
+        M:=p^(i-1);
 
 
         Pi:=PolynomialRing(F,2 + 1 + M + 1);
@@ -144,8 +144,8 @@ function lift_ed(a0,n : pols:=[], verb:=true, cstr:=[], check:=true, minimal:=fa
         // NOT YET: will make epsilon_(p^(n-1))=0
         // we have epsilon_0 = 0
         // xi+:=&+[ Pi.(5+j)*(Pi.1)^(p*j) : j in [1..M] | j ne p^(i-1) ];
-        xi+:=&+[ Pi.(3+j)*(Pi.1)^(p*j) : j in [1..M] ];
-        yi+:=&+[ Pi.(3+j)*(Pi.2)^(p*j) : j in [1..M] ];
+        xi+:=&+[ Pi.(3+j)*(Pi.1)^((2*j-1)*p) : j in [1..M] ];
+        yi+:=&+[ Pi.(3+j)*(Pi.2)^((2*j-1)*p) : j in [1..M] ];
 
 
 
@@ -304,8 +304,8 @@ function lift_ed_b(a0,b0,n : pols:=[], verb:=true, cstr:=[], check:=true, minima
 
         // necessary variables
         // we only need the coefficients below the degree of the derivative
-        // we do not need "+1" since constant terms are zero
-        M:=2*p^(i-1)-1;
+        // We also only need ODD powers!
+        M:=p^(i-1);
 
         // print "The value of M is: ", M;
 
@@ -345,8 +345,8 @@ function lift_ed_b(a0,b0,n : pols:=[], verb:=true, cstr:=[], check:=true, minima
         // NOT YET: will make epsilon_(p^(n-1))=0
         // we have epsilon_0 = 0
         // xi+:=&+[ Pi.(5+j)*(Pi.1)^(p*j) : j in [1..M] | j ne p^(i-1) ];
-        xi+:=&+[ Pi.(4+j)*(Pi.1)^(p*j) : j in [1..M] ];
-        yi+:=&+[ Pi.(4+M+j)*(Pi.2)^(p*j) : j in [1..M] ];
+        xi+:=&+[ Pi.(4+j)*(Pi.1)^((2*j-1)*p) : j in [1..M] ];
+        yi+:=&+[ Pi.(4+M+j)*(Pi.2)^((2*j-1)*p) : j in [1..M] ];
 
 
         // find higher degree terms

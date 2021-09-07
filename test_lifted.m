@@ -8,7 +8,7 @@ F<a0,b0>:=RationalFunctionField(GF(p), 2);
 pols := etapols(p,n);
 
 // twisted or not
-twisted := false;
+twisted := true;
 
 if twisted then
     va, vb, vx, vy := lift_ed_b(a0, b0, n);
@@ -197,7 +197,7 @@ end if;
 
 // test y(1/b0, 0) = 1
 if [Evaluate(fct, [1/b0, 0]) : fct in vy] eq [P!0 : i in [0..n]] then
-    print "y(0,1) works";
+    print "y(1/b0,0) works";
 else
-    print "y(0,1) fails";
+    print "y(1/b0,0) fails";
 end if;
